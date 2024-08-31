@@ -14,11 +14,13 @@ public class Item: BaseDomainEntity
     public string? Description { get; set; }
     [Range(0, int.MaxValue, ErrorMessage = "Value must not be negative.")]
     public int Price { get; set; } = default!;
+    [Range(typeof(double), "1", "5")]
+    public int Rating { get; set; } = default!;
     [Range(0, int.MaxValue, ErrorMessage = "Value must not be negative.")]
-    public int Amount { get; set; } = default!;
+    public int StockAmount { get; set; } = default!;
     public byte[]? ItemPicture { get; set; }
     
-    // Nav
+    // Relationships
     public Guid ShoppingCartId { get; set; }
     public ShoppingCart? ShoppingCart { get; set; }
 }

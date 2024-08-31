@@ -6,7 +6,7 @@ namespace App.Domain.Entities;
 
 public class ShoppingCart: BaseDomainEntity, IDomainEntityId
 {
-    // Nav
+    // Relationships
     public ICollection<Item>? Items { get; set; }
     public Guid AppUserId { get; set; }
     public AppUser? AppUser { get; set; }
