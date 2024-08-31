@@ -10,4 +10,9 @@
       <Folder Include="wwwroot\imgs\" />
     </ItemGroup>
 
+    <ItemGroup>
+      <PackageReference Include="Asp.Versioning.Mvc.ApiExplorer" Version="8.1.0" />
+      <PackageReference Include="Swashbuckle.AspNetCore" Version="6.7.3" />
+    </ItemGroup>
+
 </Project>
