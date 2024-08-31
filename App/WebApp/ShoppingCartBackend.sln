@@ -1,0 +1,24 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebApp", "WebApp\WebApp.csproj", "{A37ECB6B-2A35-4C1D-A8FF-4DB476FB6C1E}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SolutionItems", "SolutionItems", "{0BCD0117-711B-469A-B263-3E69E3861CBF}"
+	ProjectSection(SolutionItems) = preProject
+		.gitignore = .gitignore
+		global.json = global.json
+		docker-compose.yml = docker-compose.yml
+		..\..\README.md = ..\..\README.md
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{A37ECB6B-2A35-4C1D-A8FF-4DB476FB6C1E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A37ECB6B-2A35-4C1D-A8FF-4DB476FB6C1E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A37ECB6B-2A35-4C1D-A8FF-4DB476FB6C1E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A37ECB6B-2A35-4C1D-A8FF-4DB476FB6C1E}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal

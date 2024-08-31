@@ -1,0 +1,41 @@
+version: "3.9"
+
+services:
+  shopping-cart-backend-app:
+    container_name: shopping-cart-backend-app
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    ports:
+      - "8000:80"
+    depends_on:
+      - shopping-cart-postgres-v3
+    environment:
+      - ConnectionStrings:DefaultConnection=Host=shopping-cart-postgres-v3;Port=5432;Database=postgres;Username=postgres;Password=postgres
+
+  shopping-cart-postgres-v3:
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    container_name: shopping-cart-postgres-v3
+    image: "postgres:15.2-bullseye"
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    logging:
+      options:
+        max-size: 10m
+        max-file: "3"
+    ports:
+      - "5445:5432"
+    volumes:
+      - data-protection-keys:/root/.aspnet/DataProtection-Keys
+      - shopping-cart-postgres-v3-volume:/var/lib/postgresql/data
+
+volumes:
+  data-protection-keys:
+  shopping-cart-postgres-v3-volume:
+    
