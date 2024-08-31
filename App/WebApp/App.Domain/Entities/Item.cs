@@ -1,9 +1,10 @@
 using System.ComponentModel.DataAnnotations;
 using Base.Domain;
+using Base.Domain.Contracts;
 
 namespace App.Domain.Entities;
 
-public class Item: BaseDomainEntity
+public class Item: BaseDomainEntity, IDomainEntityId
 {
     [MinLength(1)]
     [MaxLength(32)]
