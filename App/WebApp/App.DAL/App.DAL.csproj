@@ -7,10 +7,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <Folder Include="Seeding\" />
-    </ItemGroup>
-
-    <ItemGroup>
+      <PackageReference Include="Microsoft.AspNetCore.Hosting" Version="2.2.7" />
       <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="8.0.8" />
       <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.8" />
       <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="8.0.4" />
@@ -20,6 +17,7 @@
       <ProjectReference Include="..\App.DAL.Contracts\App.DAL.Contracts.csproj" />
       <ProjectReference Include="..\App.Domain\App.Domain.csproj" />
       <ProjectReference Include="..\Base.DAL\Base.DAL.csproj" />
+      <ProjectReference Include="..\Helpers\Helpers.csproj" />
       <ProjectReference Include="..\Public.DTO\Public.DTO.csproj" />
     </ItemGroup>
 

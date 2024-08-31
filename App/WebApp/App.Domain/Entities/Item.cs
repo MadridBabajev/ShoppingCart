@@ -16,7 +16,7 @@ public class Item: BaseDomainEntity, IDomainEntityId
     [Range(0, int.MaxValue, ErrorMessage = "Value must not be negative.")]
     public int Price { get; set; } = default!;
     [Range(typeof(double), "1", "5")]
-    public int Rating { get; set; } = default!;
+    public double Rating { get; set; } = default!;
     [Range(0, int.MaxValue, ErrorMessage = "Value must not be negative.")]
     public int StockAmount { get; set; } = default!;
     public byte[]? ItemPicture { get; set; }
