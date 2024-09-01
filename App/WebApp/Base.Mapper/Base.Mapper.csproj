@@ -11,8 +11,7 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\App.Domain\App.Domain.csproj" />
-      <ProjectReference Include="..\Base.Mapper\Base.Mapper.csproj" />
+      <ProjectReference Include="..\Base.Mapper.Contracts\Base.Mapper.Contracts.csproj" />
     </ItemGroup>
 
 </Project>

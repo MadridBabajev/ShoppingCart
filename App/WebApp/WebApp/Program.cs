@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
+using Public.DTO;
 using Swashbuckle.AspNetCore.SwaggerGen;
 using WebApp;
 
@@ -80,6 +81,11 @@ builder.Services.AddCors(options =>
         policy.AllowAnyOrigin();
     });
 });
+
+// Add automapper configurations
+builder.Services.AddAutoMapper(
+    typeof(AutomapperConfig)
+);
 
 // Versioning
 builder.Services.AddApiVersioning(options =>

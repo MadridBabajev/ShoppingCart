@@ -11,7 +11,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Public.DTO.v1;
+using Public.DTO.v1.ApiResponses;
 using Public.DTO.v1.Identity;
 
 namespace WebApp.ApiControllers.Identity;

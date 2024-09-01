@@ -13,6 +13,7 @@
 
     <ItemGroup>
       <PackageReference Include="Asp.Versioning.Mvc.ApiExplorer" Version="8.1.0" />
+      <PackageReference Include="AutoMapper" Version="13.0.1" />
       <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.8" />
       <PackageReference Include="Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore" Version="8.0.8" />
       <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.8">
@@ -26,6 +27,7 @@
     <ItemGroup>
       <ProjectReference Include="..\App.DAL\App.DAL.csproj" />
       <ProjectReference Include="..\App.Domain\App.Domain.csproj" />
+      <ProjectReference Include="..\Public.DTO\Public.DTO.csproj" />
     </ItemGroup>
 
     <ItemGroup>

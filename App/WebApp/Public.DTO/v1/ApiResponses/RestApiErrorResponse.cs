@@ -1,6 +1,6 @@
 ﻿using System.Net;
 
-namespace Public.DTO.v1;
+namespace Public.DTO.v1.ApiResponses;
 
 /// <summary>
 /// Represents the standard response from the REST API when an error occurs.
