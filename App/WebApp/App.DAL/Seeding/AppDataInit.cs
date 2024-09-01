@@ -96,7 +96,7 @@ public static class AppDataInit
             Rating = 4.5,
             StockAmount = 10,
             Price = 50,
-            ItemPicture = FileOperations.LoadImageAsBytes(Path.Combine(basePath, SneakersImgPath))
+            ItemPicture = FileOperationsHelpers.LoadImageAsBytes(Path.Combine(basePath, SneakersImgPath))
         }, new Item
         {
             Id = guids.Item2Id,
@@ -105,7 +105,7 @@ public static class AppDataInit
             Rating = 4.4,
             StockAmount = 20,
             Price = 15,
-            ItemPicture = FileOperations.LoadImageAsBytes(Path.Combine(basePath, TShirtImgPath))
+            ItemPicture = FileOperationsHelpers.LoadImageAsBytes(Path.Combine(basePath, TShirtImgPath))
         }, new Item
         {
             Id = guids.Item3Id,
@@ -114,7 +114,7 @@ public static class AppDataInit
             Rating = 5,
             StockAmount = 1,
             Price = 1600,
-            ItemPicture = FileOperations.LoadImageAsBytes(Path.Combine(basePath, LaptopImgPath))
+            ItemPicture = FileOperationsHelpers.LoadImageAsBytes(Path.Combine(basePath, LaptopImgPath))
         }, new Item
         {
             Id = guids.Item4Id,
@@ -123,7 +123,7 @@ public static class AppDataInit
             Rating = 5,
             StockAmount = 50,
             Price = 15,
-            ItemPicture = FileOperations.LoadImageAsBytes(Path.Combine(basePath, CapImgPath))
+            ItemPicture = FileOperationsHelpers.LoadImageAsBytes(Path.Combine(basePath, CapImgPath))
         }, new Item
         {
             Id = guids.Item5Id,
@@ -132,7 +132,7 @@ public static class AppDataInit
             Rating = 4.7,
             StockAmount = 25,
             Price = 60,
-            ItemPicture = FileOperations.LoadImageAsBytes(Path.Combine(basePath, BagImgPath))
+            ItemPicture = FileOperationsHelpers.LoadImageAsBytes(Path.Combine(basePath, BagImgPath))
         });
         context.SaveChanges();
     }
