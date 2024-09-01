@@ -4,6 +4,9 @@ public static class FileOperations
 {
     public static byte[] LoadImageAsBytes(string imagePath)
     {
+        Console.WriteLine("===============================");
+        Console.WriteLine(imagePath);
+        Console.WriteLine("===============================");
         using var image = File.OpenRead(imagePath);
         using var memoryStream = new MemoryStream();
         image.CopyTo(memoryStream);

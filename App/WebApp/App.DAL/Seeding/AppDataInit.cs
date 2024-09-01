@@ -12,7 +12,7 @@ public static class AppDataInit
         "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Curabitur ornare mauris eu magna mollis, quis blandit ex sagittis. Pellentesque pulvinar, ligula feugiat finibus venenatis, lectus erat hendrerit dui, et malesuada nunc orci mollis ipsum. Donec egestas justo sit amet iaculis dapibus. Etiam arcu massa, hendrerit eget sapien fermentum, eleifend suscipit dolor. Duis egestas nulla lobortis lectus blandit fringilla. Maecenas felis mi, accumsan id felis eu, tincidunt gravida lorem.";
 
     private static readonly string SneakersImgPath = "sneakers.jpg";
-    private static readonly string TShirtImgPath = "t_shirts.jpg";
+    private static readonly string TShirtImgPath = "t_shirt.jpg";
     private static readonly string LaptopImgPath = "laptop.jpg";
     private static readonly string CapImgPath = "cap.jpg";
     private static readonly string BagImgPath = "bag.jpg";
@@ -66,6 +66,7 @@ public static class AppDataInit
             Email = userData.email,
             FirstName = userData.firstName,
             LastName = userData.lastName,
+            UserName = userData.email,
             EmailConfirmed = true,
         };
 

@@ -29,6 +29,10 @@ AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 
 // Register our UOW with scoped lifecycle
 builder.Services.AddScoped<IAppUOW, AppUOW>();
+// Register singleton DataGuids for data seeding
+builder.Services.AddSingleton<DataGuids>();
+
+builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
 // Configure the Identity
 builder.Services

@@ -114,9 +114,6 @@
               },
               "C:\\Users\\madri\\RiderProjects\\ShoppingCart\\App\\WebApp\\Helpers\\Helpers.csproj": {
                 "projectPath": "C:\\Users\\madri\\RiderProjects\\ShoppingCart\\App\\WebApp\\Helpers\\Helpers.csproj"
-              },
-              "C:\\Users\\madri\\RiderProjects\\ShoppingCart\\App\\WebApp\\Public.DTO\\Public.DTO.csproj": {
-                "projectPath": "C:\\Users\\madri\\RiderProjects\\ShoppingCart\\App\\WebApp\\Public.DTO\\Public.DTO.csproj"
               }
             }
           }
@@ -588,88 +585,6 @@
         }
       }
     },
-    "C:\\Users\\madri\\RiderProjects\\ShoppingCart\\App\\WebApp\\Public.DTO\\Public.DTO.csproj": {
-      "version": "1.0.0",
-      "restore": {
-        "projectUniqueName": "C:\\Users\\madri\\RiderProjects\\ShoppingCart\\App\\WebApp\\Public.DTO\\Public.DTO.csproj",
-        "projectName": "Public.DTO",
-        "projectPath": "C:\\Users\\madri\\RiderProjects\\ShoppingCart\\App\\WebApp\\Public.DTO\\Public.DTO.csproj",
-        "packagesPath": "C:\\Users\\madri\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\madri\\RiderProjects\\ShoppingCart\\App\\WebApp\\Public.DTO\\obj\\",
-        "projectStyle": "PackageReference",
-        "fallbackFolders": [
-          "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
-        ],
-        "configFilePaths": [
-          "C:\\Users\\madri\\AppData\\Roaming\\NuGet\\NuGet.Config",
-          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
-          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
-        ],
-        "originalTargetFrameworks": [
-          "net8.0"
-        ],
-        "sources": {
-          "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
-          "https://api.nuget.org/v3/index.json": {}
-        },
-        "frameworks": {
-          "net8.0": {
-            "targetAlias": "net8.0",
-            "projectReferences": {}
-          }
-        },
-        "warningProperties": {
-          "warnAsError": [
-            "NU1605"
-          ]
-        },
-        "restoreAuditProperties": {
-          "enableAudit": "true",
-          "auditLevel": "low",
-          "auditMode": "direct"
-        }
-      },
-      "frameworks": {
-        "net8.0": {
-          "targetAlias": "net8.0",
-          "dependencies": {
-            "Microsoft.NET.Test.Sdk": {
-              "target": "Package",
-              "version": "[17.8.0, )"
-            },
-            "coverlet.collector": {
-              "target": "Package",
-              "version": "[6.0.0, )"
-            },
-            "xunit": {
-              "target": "Package",
-              "version": "[2.5.3, )"
-            },
-            "xunit.runner.visualstudio": {
-              "target": "Package",
-              "version": "[2.5.3, )"
-            }
-          },
-          "imports": [
-            "net461",
-            "net462",
-            "net47",
-            "net471",
-            "net472",
-            "net48",
-            "net481"
-          ],
-          "assetTargetFallback": true,
-          "warn": true,
-          "frameworkReferences": {
-            "Microsoft.NETCore.App": {
-              "privateAssets": "all"
-            }
-          },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\8.0.401/PortableRuntimeIdentifierGraph.json"
-        }
-      }
-    },
     "C:\\Users\\madri\\RiderProjects\\ShoppingCart\\App\\WebApp\\WebApp\\WebApp.csproj": {
       "version": "1.0.0",
       "restore": {
@@ -731,6 +646,12 @@
               "version": "[8.0.8, )"
             },
             "Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore": {
+              "target": "Package",
+              "version": "[8.0.8, )"
+            },
+            "Microsoft.EntityFrameworkCore.Design": {
+              "include": "Runtime, Build, Native, ContentFiles, Analyzers, BuildTransitive",
+              "suppressParent": "All",
               "target": "Package",
               "version": "[8.0.8, )"
             },

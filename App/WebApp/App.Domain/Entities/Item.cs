@@ -11,7 +11,7 @@ public class Item: BaseDomainEntity, IDomainEntityId
     [Required]
     public string Name { get; set; } = default!;
     [MinLength(1)]
-    [MaxLength(32)]
+    [MaxLength(512)]
     public string? Description { get; set; }
     [Range(0, int.MaxValue, ErrorMessage = "Value must not be negative.")]
     public int Price { get; set; } = default!;
@@ -22,6 +22,5 @@ public class Item: BaseDomainEntity, IDomainEntityId
     public byte[]? ItemPicture { get; set; }
     
     // Relationships
-    public Guid ShoppingCartId { get; set; }
-    public ShoppingCart? ShoppingCart { get; set; }
+    public ICollection<ShoppingCartItem>? ShoppingCartItems { get; set; }
 }
