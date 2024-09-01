@@ -5,84 +5,143 @@ using Microsoft.EntityFrameworkCore;
 
 namespace App.DAL.Repositories;
 
-public class ShoppingCartRepository
-    (ApplicationDbContext dataContext) : EFBaseRepository<ShoppingCart, ApplicationDbContext>(dataContext),
-        IShoppingCartRepository
+public class ShoppingCartRepository : EFBaseRepository<ShoppingCartItem, ApplicationDbContext>, IShoppingCartRepository
 {
-    // Adds an item to the cart, or increments its quantity if it already exists
-    public async Task AddCartItem(Guid cartId, Guid itemId, int quantity = 1)
+    public ShoppingCartRepository(ApplicationDbContext dataContext) : base(dataContext) { }
+    
+    // Retrieves all items in the user's cart
+    public async Task<IEnumerable<ShoppingCartItem>> GetCartItems(Guid userId)
     {
-        var cart = await RepositoryDbSet
-            .Include(c => c.ShoppingCartItems)
-            .FirstOrDefaultAsync(c => c.Id == cartId);
+        var user = await RepositoryDbContext.Users
+            .Include(u => u.ShoppingCartItems)!
+            .ThenInclude(i => i.Item)
+            .FirstOrDefaultAsync(u => u.Id == userId);
 
-        if (cart == null)
-            throw new KeyNotFoundException("Cart not found.");
+        return user?.ShoppingCartItems ?? new List<ShoppingCartItem>();
+    }
+    
+    public async Task<ShopItem?> GetCartItem(Guid userId, Guid itemId)
+    {
+        var user = await RepositoryDbContext.Users
+            .Include(u => u.ShoppingCartItems)!
+            .ThenInclude(ci => ci.Item)
+            .FirstOrDefaultAsync(u => u.Id == userId);
 
-        var cartItem = cart.ShoppingCartItems?.FirstOrDefault(i => i.ItemId == itemId);
+        if (user == null)
+            throw new KeyNotFoundException("User not found.");
+
+        var cartItem = user.ShoppingCartItems?.FirstOrDefault(i => i.ItemId == itemId);
+
+        return cartItem?.Item;
+    }
+
+    // Increments its quantity, or adds an item to the user's cart if it already exists
+    public async Task AddCartItem(Guid userId, Guid itemId)
+    {
+        var user = await RepositoryDbContext.Users
+            .Include(u => u.ShoppingCartItems)
+            .FirstOrDefaultAsync(u => u.Id == userId);
+
+        if (user == null)
+            throw new KeyNotFoundException("User not found.");
+
+        var cartItem = user.ShoppingCartItems?.FirstOrDefault(i => i.ItemId == itemId);
 
         if (cartItem != null)
         {
-            cartItem.Quantity += quantity;
+            cartItem.Quantity++;
         }
         else
         {
-            cart.ShoppingCartItems ??= new List<ShoppingCartItem>();
-            cart.ShoppingCartItems.Add(new ShoppingCartItem
+            user.ShoppingCartItems ??= new List<ShoppingCartItem>();
+            user.ShoppingCartItems.Add(new ShoppingCartItem
             {
                 ItemId = itemId,
-                ShoppingCartId = cartId,
-                Quantity = quantity
+                AppUserId = userId,
+                Quantity = 1
             });
         }
 
         await RepositoryDbContext.SaveChangesAsync();
     }
 
-    // Decreases quantity of an item in the cart or removes it if the quantity becomes zero
-    public async Task RemoveCartItem(Guid cartId, Guid itemId)
+    // Decrements quantity of an item in the user's cart or removes it if the quantity becomes zero
+    public async Task RemoveCartItem(Guid userId, Guid itemId)
     {
-        var cart = await RepositoryDbSet
-            .Include(c => c.ShoppingCartItems)
-            .FirstOrDefaultAsync(c => c.Id == cartId);
+        var user = await RepositoryDbContext.Users
+            .Include(u => u.ShoppingCartItems)
+            .FirstOrDefaultAsync(u => u.Id == userId);
 
-        if (cart == null)
-            throw new KeyNotFoundException("Cart not found.");
+        if (user == null)
+            throw new KeyNotFoundException("User not found.");
 
-        var cartItem = cart.ShoppingCartItems?.FirstOrDefault(i => i.ItemId == itemId);
+        var cartItem = user.ShoppingCartItems?.FirstOrDefault(i => i.ItemId == itemId);
 
         if (cartItem != null)
         {
-            if (cartItem.Quantity > 1) cartItem.Quantity--;
-            else cart.ShoppingCartItems!.Remove(cartItem);
+            cartItem.Quantity--;
+
+            if (cartItem.Quantity <= 0)
+            {
+                user.ShoppingCartItems!.Remove(cartItem);
+            }
 
             await RepositoryDbContext.SaveChangesAsync();
         }
     }
 
-    // Removes all items from the cart
-    public async Task RemoveAllCartItems(Guid cartId)
+    // Sets the exact quantity of an item in the user's cart
+    public async Task SetCartItemQuantity(Guid userId, Guid itemId, int? quantity)
     {
-        var cart = await RepositoryDbSet
-            .Include(c => c.ShoppingCartItems)
-            .FirstOrDefaultAsync(c => c.Id == cartId);
+        if (quantity < 0)
+            throw new ArgumentException("Quantity cannot be negative.", nameof(quantity));
 
-        if (cart == null)
-            throw new KeyNotFoundException("Cart not found.");
+        var user = await RepositoryDbContext.Users
+            .Include(u => u.ShoppingCartItems)
+            .FirstOrDefaultAsync(u => u.Id == userId);
 
-        cart.ShoppingCartItems?.Clear();
+        if (user == null)
+            throw new KeyNotFoundException("User not found.");
+
+        var cartItem = user.ShoppingCartItems?.FirstOrDefault(i => i.ItemId == itemId);
+
+        if (cartItem != null)
+        {
+            if (quantity == 0)
+            {
+                user.ShoppingCartItems!.Remove(cartItem);
+            }
+            else
+            {
+                cartItem.Quantity = quantity ?? 0;
+            }
+        }
+        else if (quantity > 0)
+        {
+            user.ShoppingCartItems ??= new List<ShoppingCartItem>();
+            user.ShoppingCartItems.Add(new ShoppingCartItem
+            {
+                ItemId = itemId,
+                AppUserId = userId,
+                Quantity = (int)quantity
+            });
+        }
 
         await RepositoryDbContext.SaveChangesAsync();
     }
 
-    // Retrieves all items in the cart
-    public async Task<IEnumerable<ShoppingCartItem>> GetCartItems(Guid cartId)
+    // Removes all items from the user's cart
+    public async Task RemoveAllCartItems(Guid userId)
     {
-        var cart = await RepositoryDbSet
-            .Include(c => c.ShoppingCartItems)
-            .ThenInclude(i => i.Item)
-            .FirstOrDefaultAsync(c => c.Id == cartId);
+        var user = await RepositoryDbContext.Users
+            .Include(u => u.ShoppingCartItems)
+            .FirstOrDefaultAsync(u => u.Id == userId);
 
-        return cart?.ShoppingCartItems ?? new List<ShoppingCartItem>();
+        if (user == null)
+            throw new KeyNotFoundException("User not found.");
+
+        user.ShoppingCartItems?.Clear();
+
+        await RepositoryDbContext.SaveChangesAsync();
     }
 }

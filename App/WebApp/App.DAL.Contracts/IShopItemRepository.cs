@@ -3,7 +3,7 @@ using Base.DAL.Contract;
 
 namespace App.DAL.Contracts;
 
-public interface IItemRepository : IBaseRepository<Item>
+public interface IShopItemRepository : IBaseRepository<ShopItem>
 {
     // Repo custom methods can be added here
 }

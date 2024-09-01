@@ -7,11 +7,11 @@ namespace App.DAL;
 // ReSharper disable InconsistentNaming
 public class AppUOW(ApplicationDbContext dataContext) : EFBaseUOW<ApplicationDbContext>(dataContext), IAppUOW
 {
-    private IItemRepository? _itemsRepository;
+    private IShopItemRepository? _itemsRepository;
     private IShoppingCartRepository? _shoppingCartRepository;
 
-    public IItemRepository ItemRepository =>
-        _itemsRepository ??= new ItemRepository(UowDbContext);
+    public IShopItemRepository ShopItemRepository =>
+        _itemsRepository ??= new ShopItemRepository(UowDbContext);
     
     public IShoppingCartRepository ShoppingCartRepository =>
         _shoppingCartRepository ??= new ShoppingCartRepository(UowDbContext);

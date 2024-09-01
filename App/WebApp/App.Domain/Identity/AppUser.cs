@@ -15,6 +15,6 @@ public class AppUser : IdentityUser<Guid>, IDomainEntityId
     public string LastName { get; set; } = default!;
     
     // Relationships
-    public ShoppingCart? ShoppingCart { get; set; }
+    public ICollection<ShoppingCartItem>? ShoppingCartItems { get; set; }
     public ICollection<AppRefreshToken>? AppRefreshTokens { get; set; }
 }

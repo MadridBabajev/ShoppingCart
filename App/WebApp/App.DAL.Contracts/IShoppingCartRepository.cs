@@ -3,11 +3,13 @@ using Base.DAL.Contract;
 
 namespace App.DAL.Contracts;
 
-public interface IShoppingCartRepository : IBaseRepository<ShoppingCart>
+public interface IShoppingCartRepository : IBaseRepository<ShoppingCartItem>
 {
     // Repo custom methods can be added here
-    Task AddCartItem(Guid cartId, Guid itemId, int quantity);
-    Task RemoveCartItem(Guid cartId, Guid itemId);
-    Task RemoveAllCartItems(Guid cartId);
-    Task<IEnumerable<ShoppingCartItem>> GetCartItems(Guid cartId);
+    Task AddCartItem(Guid userId, Guid itemId);
+    Task RemoveCartItem(Guid userId, Guid itemId);
+    Task SetCartItemQuantity(Guid userId, Guid itemId, int? quantity);
+    Task RemoveAllCartItems(Guid userId);
+    Task<IEnumerable<ShoppingCartItem>> GetCartItems(Guid userId);
+    Task<ShopItem?> GetCartItem(Guid userId, Guid itemId);
 }

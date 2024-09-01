@@ -88,7 +88,7 @@ public static class AppDataInit
     {
         if (context.Items.Any()) return;
         
-        context.Items.AddRange(new Item
+        context.Items.AddRange(new ShopItem
         {
             Id = guids.Item1Id,
             Name = "Sneakers",
@@ -97,7 +97,7 @@ public static class AppDataInit
             StockAmount = 10,
             Price = 50,
             ItemPicture = FileOperationsHelpers.LoadImageAsBytes(Path.Combine(basePath, SneakersImgPath))
-        }, new Item
+        }, new ShopItem
         {
             Id = guids.Item2Id,
             Name = "T-shirts",
@@ -106,7 +106,7 @@ public static class AppDataInit
             StockAmount = 20,
             Price = 15,
             ItemPicture = FileOperationsHelpers.LoadImageAsBytes(Path.Combine(basePath, TShirtImgPath))
-        }, new Item
+        }, new ShopItem
         {
             Id = guids.Item3Id,
             Name = "Laptops",
@@ -115,7 +115,7 @@ public static class AppDataInit
             StockAmount = 1,
             Price = 1600,
             ItemPicture = FileOperationsHelpers.LoadImageAsBytes(Path.Combine(basePath, LaptopImgPath))
-        }, new Item
+        }, new ShopItem
         {
             Id = guids.Item4Id,
             Name = "Caps",
@@ -124,7 +124,7 @@ public static class AppDataInit
             StockAmount = 50,
             Price = 15,
             ItemPicture = FileOperationsHelpers.LoadImageAsBytes(Path.Combine(basePath, CapImgPath))
-        }, new Item
+        }, new ShopItem
         {
             Id = guids.Item5Id,
             Name = "Bags",
