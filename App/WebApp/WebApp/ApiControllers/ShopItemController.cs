@@ -9,7 +9,6 @@ using Microsoft.AspNetCore.Mvc;
 using Public.DTO.Mappers;
 using Public.DTO.v1.ApiResponses;
 using Public.DTO.v1.ShopItems;
-using Public.DTO.v1.ShoppingCartItems.ResponseDTOs;
 
 namespace WebApp.ApiControllers;
 
@@ -38,9 +37,9 @@ public class ShopItemController : ControllerBase
     }
 
     /// <summary>
-    /// Get a list of all items in the shopping cart.
+    /// Get a list of all items in the shop.
     /// </summary>
-    /// <returns>A list of items.</returns>
+    /// <returns>A list of all shop items.</returns>
     [HttpGet]
     [Produces(MediaTypeNames.Application.Json)]
     [ProducesResponseType(typeof(IEnumerable<ShopItemListElement>), StatusCodes.Status200OK)]
@@ -55,18 +54,18 @@ public class ShopItemController : ControllerBase
         }
         catch (Exception e)
         {
-            return FormatErrorResponse($"Error retrieving the cart items list: {e.Message}");
+            return FormatErrorResponse($"Error retrieving the shop items list: {e.Message}");
         }
     }
 
     /// <summary>
-    /// Get the cart item details.
+    /// Get the shop item details.
     /// </summary>
     /// <param name="itemId">The ID of the item.</param>
-    /// <returns>The details of the cart item.</returns>
+    /// <returns>The details of the shop item.</returns>
     [HttpGet]
     [Produces(MediaTypeNames.Application.Json)]
-    [ProducesResponseType(typeof(ShoppingCartItemDetails), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ShopItemDetails), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Policy = "Optional")]
     public async Task<IActionResult> GetShopItemDetails([FromBody] Guid itemId)
@@ -76,7 +75,7 @@ public class ShopItemController : ControllerBase
         {
             var item = await _uow.ShopItemRepository.FindAsync(itemId);
             if (item != null) return Ok(_detailsMapper.Map(item));
-            return FormatErrorResponse("Error finding the cart item:");
+            return FormatErrorResponse("Error finding the shop item:");
         }
         catch (Exception e)
         {
