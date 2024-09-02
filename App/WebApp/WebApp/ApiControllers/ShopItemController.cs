@@ -21,14 +21,17 @@ namespace WebApp.ApiControllers;
 public class ShopItemController : ControllerBase
 {
     private readonly IAppBLL _bll;
+    private readonly ILogger<ShopItemController> _logger;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="ShopItemController"/> class.
     /// </summary>
     /// <param name="bll">The business logic layer instance.</param>
-    public ShopItemController(IAppBLL bll)
+    /// <param name="logger">The logger instance.</param>
+    public ShopItemController(IAppBLL bll, ILogger<ShopItemController> logger)
     {
         _bll = bll;
+        _logger = logger;
     }
 
     /// <summary>
@@ -41,14 +44,18 @@ public class ShopItemController : ControllerBase
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     public async Task<ActionResult<IEnumerable<ShopItemListElement?>>> GetAllCartItems()
     {
-        // Get cart items from the database
         Guid userId = User.GetUserId();
+        _logger.LogInformation("Fetching all cart items for user {UserId}", userId);
+
         try
         {
-            return Ok(await _bll.ShopItemService.GetCartItems(userId));
+            var cartItems = await _bll.ShopItemService.GetCartItems(userId);
+            _logger.LogInformation("Successfully retrieved {Count} cart items for user {UserId}", cartItems.Count(), userId);
+            return Ok(cartItems);
         }
         catch (Exception e)
         {
+            _logger.LogError(e, "Error retrieving the cart items list for user {UserId}", userId);
             return FormatErrorResponse($"Error retrieving the cart items list: {e.Message}");
         }
     }
@@ -66,23 +73,30 @@ public class ShopItemController : ControllerBase
     public async Task<IActionResult> GetShoppingCartItemDetails([FromBody] Guid itemId)
     {
         Guid userId = User.GetUserId();
+        _logger.LogInformation("Fetching details for cart item {ItemId} for user {UserId}", itemId, userId);
 
         try
         {
             var item = await _bll.ShopItemService.GetCartItem(userId, itemId);
-            if (item != null) return Ok(item);
+            if (item != null)
+            {
+                _logger.LogInformation("Successfully retrieved details for cart item {ItemId} for user {UserId}", itemId, userId);
+                return Ok(item);
+            }
+            _logger.LogWarning("Cart item {ItemId} not found for user {UserId}", itemId, userId);
             return FormatErrorResponse("Error finding the cart item:");
         }
         catch (Exception e)
         {
+            _logger.LogError(e, "Error getting the item details for cart item {ItemId} for user {UserId}", itemId, userId);
             return FormatErrorResponse($"Error getting the item details: {e.Message}");
         }
     }
 
     /// <summary>
-    /// Endpoint for adding or removing a items from the shopping cart
+    /// Endpoint for adding or removing items from the shopping cart.
     /// </summary>
-    /// <param name="shoppingCartItemAction">The action of the user</param>
+    /// <param name="shoppingCartItemAction">The action of the user.</param>
     /// <returns></returns>
     [Produces(MediaTypeNames.Application.Json)]
     [ProducesResponseType(StatusCodes.Status200OK)]
@@ -92,22 +106,23 @@ public class ShopItemController : ControllerBase
     public async Task<IActionResult> AddRemoveCartItem([FromBody] ShoppingCartItemAction shoppingCartItemAction)
     {
         Guid userId = User.GetUserId();
+        _logger.LogInformation("User {UserId} requested {Action} for item {ItemId}", userId, shoppingCartItemAction.ItemAction, shoppingCartItemAction.ItemId);
 
         try
         {
-            await _bll.ShopItemService
-                .AddRemoveCartItem(userId, shoppingCartItemAction.ItemId, shoppingCartItemAction.ItemAction,
-                    shoppingCartItemAction.Quantity);
+            await _bll.ShopItemService.AddRemoveCartItem(userId, shoppingCartItemAction.ItemId, shoppingCartItemAction.ItemAction, shoppingCartItemAction.Quantity);
+            _logger.LogInformation("Successfully performed {Action} for item {ItemId} for user {UserId}", shoppingCartItemAction.ItemAction, shoppingCartItemAction.ItemId, userId);
             return Ok();
         }
         catch (Exception e)
         {
+            _logger.LogError(e, "Error performing {Action} for item {ItemId} for user {UserId}", shoppingCartItemAction.ItemAction, shoppingCartItemAction.ItemId, userId);
             return FormatErrorResponse($"Error adding/removing the cart item: {e.Message}");
         }
     }
-    
+
     /// <summary>
-    /// Endpoint for adding or removing a items from the shopping cart
+    /// Endpoint for clearing the shopping cart.
     /// </summary>
     /// <returns></returns>
     [Produces(MediaTypeNames.Application.Json)]
@@ -118,18 +133,21 @@ public class ShopItemController : ControllerBase
     public async Task<IActionResult> ClearShoppingCart()
     {
         Guid userId = User.GetUserId();
+        _logger.LogInformation("User {UserId} requested clearing the shopping cart", userId);
 
         try
         {
             await _bll.ShopItemService.RemoveAllCartItems(userId);
+            _logger.LogInformation("Successfully cleared the shopping cart for user {UserId}", userId);
             return Ok();
         }
         catch (Exception e)
         {
-            return FormatErrorResponse($"Error occured when removing a tag: {e}");
+            _logger.LogError(e, "Error occurred when clearing the shopping cart for user {UserId}", userId);
+            return FormatErrorResponse($"Error occurred when clearing the shopping cart: {e.Message}");
         }
     }
-    
+
     /// <summary>
     /// Get a list of all items in the shop.
     /// </summary>
@@ -140,14 +158,17 @@ public class ShopItemController : ControllerBase
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Policy = "Optional")]
     public async Task<ActionResult<IEnumerable<ShopItemListElement?>>> GetAllShopItems()
     {
-        // Get shop items from the database
+        _logger.LogInformation("Fetching all shop items");
+
         try
         {
             var shopItems = await _bll.ShopItemService.AllAsync();
+            _logger.LogInformation("Successfully retrieved {Count} shop items", shopItems.Count());
             return Ok(shopItems);
         }
         catch (Exception e)
         {
+            _logger.LogError(e, "Error retrieving the shop items list");
             return FormatErrorResponse($"Error retrieving the shop items list: {e.Message}");
         }
     }
@@ -164,21 +185,30 @@ public class ShopItemController : ControllerBase
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Policy = "Optional")]
     public async Task<IActionResult> GetShopItemDetails([FromBody] Guid itemId)
     {
-        
+        _logger.LogInformation("Fetching details for shop item {ItemId}", itemId);
+
         try
         {
             var item = await _bll.ShopItemService.FindAsync(itemId);
-            if (item != null) return Ok(item);
+            if (item != null)
+            {
+                _logger.LogInformation("Successfully retrieved details for shop item {ItemId}", itemId);
+                return Ok(item);
+            }
+            _logger.LogWarning("Shop item {ItemId} not found", itemId);
             return FormatErrorResponse("Error finding the shop item:");
         }
         catch (Exception e)
         {
+            _logger.LogError(e, "Error getting the item details for shop item {ItemId}", itemId);
             return FormatErrorResponse($"Error getting the item details: {e.Message}");
         }
     }
-    
-    private ActionResult FormatErrorResponse(string message) {
-        return BadRequest(new RestApiErrorResponse {
+
+    private ActionResult FormatErrorResponse(string message)
+    {
+        return BadRequest(new RestApiErrorResponse
+        {
             Status = HttpStatusCode.BadRequest,
             Error = message
         });

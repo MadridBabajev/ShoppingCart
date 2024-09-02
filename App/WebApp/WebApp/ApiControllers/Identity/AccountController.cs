@@ -63,20 +63,20 @@ public class AccountController : ControllerBase
     {
         if (expiresInSeconds <= 0) expiresInSeconds = int.MaxValue;
 
+        _logger.LogInformation("Attempting to register a new user with email {Email}", registrationData.Email);
+
         // Check if the user is already registered
         var existingUsers = await _userManager.Users.Where(u => u.Email == registrationData.Email).ToListAsync();
 
         if (existingUsers.Any())
         {
-            _logger.LogWarning("User with email {} is already registered with the given user type",
-                registrationData.Email);
-            return FormatErrorResponse(
-                $"User with email {registrationData.Email} is already registered with the given user type");
+            _logger.LogWarning("User registration failed: Email {Email} is already in use", registrationData.Email);
+            return FormatErrorResponse($"User with email {registrationData.Email} is already registered.");
         }
 
         if (!registrationData.Password.Equals(registrationData.ConfirmPassword))
         {
-            _logger.LogWarning("Password and confirm password fields do not match");
+            _logger.LogWarning("User registration failed: Password and confirm password do not match for email {Email}", registrationData.Email);
             return FormatErrorResponse("Password and Confirmation password do not match");
         }
 
@@ -97,11 +97,12 @@ public class AccountController : ControllerBase
         if (!result.Succeeded)
         {
             var errorDescription = result.Errors.First().Description;
-            _logger.LogError("Error registering user: {ErrorDescription}", errorDescription);
+            _logger.LogError("User registration failed: {ErrorDescription}", errorDescription);
             return FormatErrorResponse(errorDescription);
         }
 
         await _context.SaveChangesAsync();
+        _logger.LogInformation("User {Email} registered successfully", registrationData.Email);
 
         // Save user's full name into claims
         result = await _userManager.AddClaimsAsync(appUser, new List<Claim>
@@ -110,13 +111,17 @@ public class AccountController : ControllerBase
             new(ClaimTypes.Surname, appUser.LastName)
         });
 
-        if (!result.Succeeded) return FormatErrorResponse(result.Errors.First().Description);
+        if (!result.Succeeded)
+        {
+            _logger.LogError("Failed to add claims for user {Email}: {ErrorDescription}", appUser.Email, result.Errors.First().Description);
+            return FormatErrorResponse(result.Errors.First().Description);
+        }
 
         // Get full user from system with fixed data
         appUser = await _userManager.FindByEmailAsync(appUser.Email);
         if (appUser == null)
         {
-            _logger.LogWarning("User with email {} is not found after registration", registrationData.Email);
+            _logger.LogError("User {Email} not found after registration", registrationData.Email);
             return BadRequest(new RestApiErrorResponse
             {
                 Status = HttpStatusCode.BadRequest,
@@ -136,25 +141,8 @@ public class AccountController : ControllerBase
             ExpiresIn = jwtExpiration
         };
 
-        var response = result.Succeeded.ToString();
-        _logger.LogInformation("Response: {Response}", response);
+        _logger.LogInformation("JWT generated successfully for user {Email}", appUser.Email);
         return Ok(res);
-    }
-
-    private (string jwt, int jwtExpiration) GenerateJwt(IEnumerable<Claim> claims, int expiresInSeconds)
-    {
-        int expiresIn = expiresInSeconds < _configuration.GetValue<int>("JWT:ExpiresInSeconds")
-            ? expiresInSeconds
-            : _configuration.GetValue<int>("JWT:ExpiresInSeconds");
-
-        var jwt = IdentityHelpers.GenerateJwt(
-            claims,
-            _configuration["JWT:Key"]!,
-            _configuration["JWT:Issuer"]!,
-            _configuration["JWT:Audience"]!,
-            expiresInSeconds
-        );
-        return (jwt, expiresIn);
     }
 
     /// <summary>
@@ -172,13 +160,15 @@ public class AccountController : ControllerBase
     {
         if (expiresInSeconds <= 0) expiresInSeconds = _configuration.GetValue<int>("JWT:ExpiresInSeconds");
 
+        _logger.LogInformation("User {Email} attempting to log in", loginData.Email);
+
         // Verify if the user exists
         var appUser = await _userManager.Users
             .Where(u => u.Email == loginData.Email).FirstOrDefaultAsync();
 
         if (appUser == null)
         {
-            _logger.LogWarning("WebApi login failed, email {} not found", loginData.Email);
+            _logger.LogWarning("Login failed: No user found with email {Email}", loginData.Email);
             return FormatErrorResponse("No user with the provided email was found");
         }
 
@@ -186,9 +176,11 @@ public class AccountController : ControllerBase
         var result = await _signInManager.CheckPasswordSignInAsync(appUser, loginData.Password, false);
         if (!result.Succeeded)
         {
-            _logger.LogWarning("WebApi login failed, password problem for user {}", loginData.Email);
+            _logger.LogWarning("Login failed: Incorrect password for user {Email}", loginData.Email);
             return FormatErrorResponse("User/Password problem");
         }
+
+        _logger.LogInformation("User {Email} logged in successfully", loginData.Email);
 
         // Get claims based user
         var claimsPrincipal = await _signInManager.CreateUserPrincipalAsync(appUser);
@@ -232,6 +224,7 @@ public class AccountController : ControllerBase
             ExpiresIn = jwtExpiration
         };
 
+        _logger.LogInformation("JWT generated successfully for user {Email}", appUser.Email);
         return Ok(res);
     }
 
@@ -248,6 +241,8 @@ public class AccountController : ControllerBase
     {
         if (expiresInSeconds <= 0) expiresInSeconds = int.MaxValue;
 
+        _logger.LogInformation("User attempting to refresh token");
+
         JwtSecurityToken jwtToken;
         // Get user info from jwt
         try
@@ -257,6 +252,7 @@ public class AccountController : ControllerBase
         }
         catch (Exception e)
         {
+            _logger.LogError("Token parsing failed: {ErrorMessage}", e.Message);
             return FormatErrorResponse($"Cant parse the token, {e.Message}");
         }
 
@@ -264,6 +260,7 @@ public class AccountController : ControllerBase
                 _configuration["JWT:Issuer"]!,
                 _configuration["JWT:Audience"]!))
         {
+            _logger.LogWarning("JWT validation failed");
             return FormatErrorResponse("JWT validation fail");
         }
 
@@ -274,7 +271,11 @@ public class AccountController : ControllerBase
         var appUser = await _userManager.Users
             .Include(u => u.AppRefreshTokens)
             .FirstOrDefaultAsync(u => u.Email == userEmail);
-        if (appUser == null) return FormatErrorResponse($"User with email {userEmail} not found");
+        if (appUser == null)
+        {
+            _logger.LogWarning("Refresh token failed: User with email {Email} not found", userEmail);
+            return FormatErrorResponse($"User with email {userEmail} not found");
+        }
 
         // Load and compare refresh tokens
         await _context.Entry(appUser)
@@ -289,6 +290,7 @@ public class AccountController : ControllerBase
 
         if (appUser.AppRefreshTokens == null || appUser.AppRefreshTokens.Count == 0)
         {
+            _logger.LogWarning("Refresh token failed: No valid refresh tokens found for user {Email}", userEmail);
             return FormatErrorResponse(
                 $"RefreshTokens collection is null or empty - {appUser.AppRefreshTokens?.Count}");
         }
@@ -317,6 +319,7 @@ public class AccountController : ControllerBase
             ExpiresIn = jwtExpiration
         };
 
+        _logger.LogInformation("JWT refreshed successfully for user {Email}", userEmail);
         return Ok(res);
     }
 
@@ -333,10 +336,16 @@ public class AccountController : ControllerBase
         // Delete the refresh token - so user is kicked out after jwt expiration
         var userId = User.GetUserId();
 
+        _logger.LogInformation("User {UserId} attempting to log out", userId);
+
         var appUser = await _context.Users
             .Where(u => u.Id == userId)
             .SingleOrDefaultAsync();
-        if (appUser == null) return FormatErrorResponse("No user was found");
+        if (appUser == null)
+        {
+            _logger.LogWarning("Logout failed: No user found with ID {UserId}", userId);
+            return FormatErrorResponse("No user was found");
+        }
 
         await _context.Entry(appUser)
             .Collection(u => u.AppRefreshTokens!)
@@ -354,7 +363,24 @@ public class AccountController : ControllerBase
 
         var deleteCount = await _context.SaveChangesAsync();
 
+        _logger.LogInformation("User {UserId} logged out successfully, {DeleteCount} tokens deleted", userId, deleteCount);
         return Ok(new { TokenDeleteCount = deleteCount });
+    }
+    
+    private (string jwt, int jwtExpiration) GenerateJwt(IEnumerable<Claim> claims, int expiresInSeconds)
+    {
+        int expiresIn = expiresInSeconds < _configuration.GetValue<int>("JWT:ExpiresInSeconds")
+            ? expiresInSeconds
+            : _configuration.GetValue<int>("JWT:ExpiresInSeconds");
+
+        var jwt = IdentityHelpers.GenerateJwt(
+            claims,
+            _configuration["JWT:Key"]!,
+            _configuration["JWT:Issuer"]!,
+            _configuration["JWT:Audience"]!,
+            expiresInSeconds
+        );
+        return (jwt, expiresIn);
     }
 
     private ActionResult FormatErrorResponse(string message)

@@ -2,7 +2,7 @@ using App.Domain.Entities;
 using AutoMapper;
 using Public.DTO.v1.ShoppingCartItems.ResponseDTOs;
 
-namespace Public.DTO;
+namespace App.BLL;
 
 public class AutomapperConfig : Profile
 {

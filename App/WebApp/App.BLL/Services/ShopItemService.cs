@@ -25,6 +25,18 @@ public class ShopItemService(IAppUOW uow, IMapper<ShopItemDetails, ShopItem> ite
     {
         return await uow.ShopItemRepository.FindAsync(id);
     }
+    
+    public async Task<IEnumerable<ShopItemListElement?>> GetCartItems(Guid userId)
+    {
+        var cartItems = await uow.ShopItemRepository.GetCartItems(userId);
+        return cartItems.Select(e => itemListElementMapper.MapToShopItemListElem(e.Item!, userId)).ToList();
+    }
+
+    public async Task<ShopItemDetails?> GetCartItem(Guid userId, Guid itemId)
+    {
+        var cartItem = await uow.ShopItemRepository.GetCartItem(userId, itemId);
+        return itemDetailsMapper.Map(cartItem);
+    }
 
     public async Task AddRemoveCartItem(Guid userId, Guid itemId, ECartItemActions action, int? quantity)
     {
@@ -49,16 +61,4 @@ public class ShopItemService(IAppUOW uow, IMapper<ShopItemDetails, ShopItem> ite
 
     public async Task RemoveAllCartItems(Guid userId) 
         => await uow.ShopItemRepository.RemoveAllCartItems(userId);
-
-    public async Task<IEnumerable<ShopItemListElement?>> GetCartItems(Guid userId)
-    {
-        var cartItems = await uow.ShopItemRepository.GetCartItems(userId);
-        return cartItems.Select(e => itemListElementMapper.MapToShopItemListElem(e.Item!, userId)).ToList();
-    }
-
-    public async Task<ShopItemDetails?> GetCartItem(Guid userId, Guid itemId)
-    {
-        var cartItem = await uow.ShopItemRepository.GetCartItem(userId, itemId);
-        return itemDetailsMapper.Map(cartItem);
-    }
 }
