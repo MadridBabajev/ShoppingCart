@@ -1,6 +1,6 @@
 ﻿namespace Helpers;
 
-public static class FileOperations
+public static class FileOperationsHelpers
 {
     public static byte[] LoadImageAsBytes(string imagePath)
     {

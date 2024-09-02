@@ -11,10 +11,9 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
 {
     public DbSet<AppRefreshToken> AppRefreshTokens { get; set; } = default!;
     public DbSet<AppUser> AppUsers { get; set; } = default!;
-
-    public DbSet<ShoppingCart> ShoppingCarts { get; set; } = default!;
+    
     public DbSet<ShoppingCartItem> ShoppingCartItems { get; set; } = default!;
-    public DbSet<Item> Items { get; set; } = default!;
+    public DbSet<ShopItem> Items { get; set; } = default!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

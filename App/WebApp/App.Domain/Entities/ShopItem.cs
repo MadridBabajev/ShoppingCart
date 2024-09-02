@@ -4,7 +4,7 @@ using Base.Domain.Contracts;
 
 namespace App.Domain.Entities;
 
-public class Item: BaseDomainEntity, IDomainEntityId
+public class ShopItem: BaseDomainEntity, IDomainEntityId
 {
     [MinLength(1)]
     [MaxLength(32)]

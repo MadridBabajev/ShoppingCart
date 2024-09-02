@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
+using Public.DTO;
 using Swashbuckle.AspNetCore.SwaggerGen;
 using WebApp;
 
@@ -81,6 +82,11 @@ builder.Services.AddCors(options =>
     });
 });
 
+// Add automapper configurations
+builder.Services.AddAutoMapper(
+    typeof(AutomapperConfig)
+);
+
 // Versioning
 builder.Services.AddApiVersioning(options =>
     {
@@ -114,6 +120,7 @@ if (app.Environment.IsDevelopment()) app.UseMigrationsEndPoint();
 else app.UseHsts();
 
 app.UseHttpsRedirection();
+app.UseStaticFiles();
 app.UseRouting();
 
 app.UseCors("CorsAllowAll");

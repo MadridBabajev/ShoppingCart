@@ -88,7 +88,7 @@ public static class AppDataInit
     {
         if (context.Items.Any()) return;
         
-        context.Items.AddRange(new Item
+        context.Items.AddRange(new ShopItem
         {
             Id = guids.Item1Id,
             Name = "Sneakers",
@@ -96,8 +96,8 @@ public static class AppDataInit
             Rating = 4.5,
             StockAmount = 10,
             Price = 50,
-            ItemPicture = FileOperations.LoadImageAsBytes(Path.Combine(basePath, SneakersImgPath))
-        }, new Item
+            ItemPicture = FileOperationsHelpers.LoadImageAsBytes(Path.Combine(basePath, SneakersImgPath))
+        }, new ShopItem
         {
             Id = guids.Item2Id,
             Name = "T-shirts",
@@ -105,8 +105,8 @@ public static class AppDataInit
             Rating = 4.4,
             StockAmount = 20,
             Price = 15,
-            ItemPicture = FileOperations.LoadImageAsBytes(Path.Combine(basePath, TShirtImgPath))
-        }, new Item
+            ItemPicture = FileOperationsHelpers.LoadImageAsBytes(Path.Combine(basePath, TShirtImgPath))
+        }, new ShopItem
         {
             Id = guids.Item3Id,
             Name = "Laptops",
@@ -114,8 +114,8 @@ public static class AppDataInit
             Rating = 5,
             StockAmount = 1,
             Price = 1600,
-            ItemPicture = FileOperations.LoadImageAsBytes(Path.Combine(basePath, LaptopImgPath))
-        }, new Item
+            ItemPicture = FileOperationsHelpers.LoadImageAsBytes(Path.Combine(basePath, LaptopImgPath))
+        }, new ShopItem
         {
             Id = guids.Item4Id,
             Name = "Caps",
@@ -123,8 +123,8 @@ public static class AppDataInit
             Rating = 5,
             StockAmount = 50,
             Price = 15,
-            ItemPicture = FileOperations.LoadImageAsBytes(Path.Combine(basePath, CapImgPath))
-        }, new Item
+            ItemPicture = FileOperationsHelpers.LoadImageAsBytes(Path.Combine(basePath, CapImgPath))
+        }, new ShopItem
         {
             Id = guids.Item5Id,
             Name = "Bags",
@@ -132,7 +132,7 @@ public static class AppDataInit
             Rating = 4.7,
             StockAmount = 25,
             Price = 60,
-            ItemPicture = FileOperations.LoadImageAsBytes(Path.Combine(basePath, BagImgPath))
+            ItemPicture = FileOperationsHelpers.LoadImageAsBytes(Path.Combine(basePath, BagImgPath))
         });
         context.SaveChanges();
     }
