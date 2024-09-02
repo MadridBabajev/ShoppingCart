@@ -120,6 +120,7 @@ if (app.Environment.IsDevelopment()) app.UseMigrationsEndPoint();
 else app.UseHsts();
 
 app.UseHttpsRedirection();
+app.UseStaticFiles();
 app.UseRouting();
 
 app.UseCors("CorsAllowAll");

@@ -12,7 +12,7 @@ public class ShopItemListElement: ItemDtoBase
     /// </summary>
     public int StockAmount { get; set; } = default!;
     /// <summary>
-    /// Defines whether the item has been added to the cart or not.
+    /// Quantity of the item in cart.
     /// </summary>
-    public bool IsInCart = default!;
+    public int QuantityTaken { get; set; } = default!;
 }

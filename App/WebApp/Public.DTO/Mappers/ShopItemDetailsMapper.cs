@@ -5,4 +5,7 @@ using Public.DTO.v1.ShopItems;
 
 namespace Public.DTO.Mappers;
 
-public class ShopItemDetailsMapper(IMapper mapper) : BaseMapper<ShopItem, ShopItemDetails>(mapper);
+public class ShopItemDetailsMapper(IMapper mapper) : BaseMapper<ShopItem, ShopItemDetails>(mapper)
+{
+    
+};

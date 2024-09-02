@@ -1,11 +1,11 @@
 using Public.DTO.v1.BaseDTO;
 
-namespace Public.DTO.v1.ShoppingCartItems.ResponseDTOs;
+namespace Public.DTO.v1.ShopItems;
 
 /// <summary>
-/// Represents item DTO in a shopping cart list.
+/// Represents the details DTO an the item.
 /// </summary>
-public class ShoppingCartItemListElement: ItemDtoBase
+public class ShopItemDetails: ItemDetailsDtoBase
 {
     /// <summary>
     /// Quantity of the item in cart.

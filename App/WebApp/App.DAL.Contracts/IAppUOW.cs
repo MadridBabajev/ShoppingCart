@@ -5,6 +5,5 @@ namespace App.DAL.Contracts;
 public interface IAppUOW : IBaseUOW
 {
     // list all the repositories
-    IShoppingCartRepository ShoppingCartRepository { get; }
-    IShopItemRepository ShopItemRepository { get; }
+    IShopItemRepository ShoppingCartRepository { get; }
 }

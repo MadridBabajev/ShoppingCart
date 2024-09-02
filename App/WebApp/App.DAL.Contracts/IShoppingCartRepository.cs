@@ -3,7 +3,7 @@ using Base.DAL.Contract;
 
 namespace App.DAL.Contracts;
 
-public interface IShoppingCartRepository : IBaseRepository<ShoppingCartItem>
+public interface IShopItemRepository : IBaseRepository<ShopItem>
 {
     // Repo custom methods can be added here
     Task AddCartItem(Guid userId, Guid itemId);
