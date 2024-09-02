@@ -1,4 +1,6 @@
 using System.Text;
+using App.BLL;
+using App.BLL.Contracts;
 using App.DAL;
 using App.DAL.Contracts;
 using App.DAL.Seeding;
@@ -28,8 +30,10 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 
 AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 
-// Register our UOW with scoped lifecycle
+// Register UOW with scoped lifecycle
 builder.Services.AddScoped<IAppUOW, AppUOW>();
+// Register BLL with scoped lifecycle
+builder.Services.AddScoped<IAppBLL, AppBLL>();
 // Register singleton DataGuids for data seeding
 builder.Services.AddSingleton<DataGuids>();
 

@@ -23,7 +23,6 @@ public abstract class EFBaseRepository<TEntity, TKey, TDbContext> : IBaseReposit
 {
     protected TDbContext RepositoryDbContext;
     protected DbSet<TEntity> RepositoryDbSet;
-    private IBaseRepository<TEntity, TKey>? _baseRepositoryImplementation;
 
     public EFBaseRepository(TDbContext dataContext)
     {
@@ -36,16 +35,4 @@ public abstract class EFBaseRepository<TEntity, TKey, TDbContext> : IBaseReposit
 
     public virtual async Task<TEntity?> FindAsync(TKey id)
         =>  await RepositoryDbSet.FindAsync(id);
-
-    public virtual TEntity Add(TEntity entity)
-        => RepositoryDbSet.Add(entity).Entity;
-
-    public virtual TEntity Remove(TEntity entity)
-        =>  RepositoryDbSet.Remove(entity).Entity;
-
-    public virtual async Task<TEntity?> RemoveAsync(TKey id)
-    {
-        var entity = await FindAsync(id);
-        return entity != null ? Remove(entity) : null;
-    }
 }

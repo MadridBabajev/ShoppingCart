@@ -1,16 +1,14 @@
 using System.Net;
 using System.Net.Mime;
-using App.DAL.Contracts;
+using App.BLL.Contracts;
 using Asp.Versioning;
-using AutoMapper;
 using Helpers;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Public.DTO.Mappers;
 using Public.DTO.v1.ApiResponses;
-using Public.DTO.v1.ShopItems;
 using Public.DTO.v1.ShoppingCartItems.RequestDTOs;
+using Public.DTO.v1.ShoppingCartItems.ResponseDTOs;
 
 namespace WebApp.ApiControllers;
 
@@ -22,20 +20,15 @@ namespace WebApp.ApiControllers;
 [Route("api/v{version:apiVersion}/[controller]/[action]")]
 public class ShopItemController : ControllerBase
 {
-    private readonly IAppUOW _uow;
-    private readonly ShopItemListElemMapper _listMapper;
-    private readonly ShopItemDetailsMapper _detailsMapper;
+    private readonly IAppBLL _bll;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="ShopItemController"/> class.
     /// </summary>
-    /// <param name="uow">The data access layer instance.</param>
-    /// <param name="autoMapper">The AutoMapper instance.</param>
-    public ShopItemController(IAppUOW uow, IMapper autoMapper)
+    /// <param name="bll">The business logic layer instance.</param>
+    public ShopItemController(IAppBLL bll)
     {
-        _uow = uow;
-        _listMapper = new ShopItemListElemMapper(autoMapper);
-        _detailsMapper = new ShopItemDetailsMapper(autoMapper);
+        _bll = bll;
     }
 
     /// <summary>
@@ -52,9 +45,7 @@ public class ShopItemController : ControllerBase
         Guid userId = User.GetUserId();
         try
         {
-            var cartItems = await _uow.ShopItemRepository.GetCartItems(userId);
-            return cartItems.Select(e => _listMapper.MapShoppingCartItemToShopItemListElem(e)).ToList();
-
+            return Ok(await _bll.ShopItemService.GetCartItems(userId));
         }
         catch (Exception e)
         {
@@ -78,8 +69,8 @@ public class ShopItemController : ControllerBase
 
         try
         {
-            var item = await _uow.ShopItemRepository.GetCartItem(userId, itemId);
-            if (item != null) return Ok(_detailsMapper.Map(item));
+            var item = await _bll.ShopItemService.GetCartItem(userId, itemId);
+            if (item != null) return Ok(item);
             return FormatErrorResponse("Error finding the cart item:");
         }
         catch (Exception e)
@@ -104,24 +95,9 @@ public class ShopItemController : ControllerBase
 
         try
         {
-            switch (shoppingCartItemAction.ItemAction)
-            {
-                case ECartItemActions.Increment:
-                    await _uow.ShopItemRepository
-                        .AddCartItem(userId, shoppingCartItemAction.ItemId);
-                    break;
-                case ECartItemActions.Decrement:
-                    await _uow.ShopItemRepository
-                        .RemoveCartItem(userId, shoppingCartItemAction.ItemId);
-                    break;
-                case ECartItemActions.SetAmount:
-                    await _uow.ShopItemRepository
-                        .SetCartItemQuantity(userId, shoppingCartItemAction.ItemId, shoppingCartItemAction.Quantity);
-                    break;
-                default:
-                    return FormatErrorResponse("Error adding/removing the cart item: Invalid cart action");
-            }
-            
+            await _bll.ShopItemService
+                .AddRemoveCartItem(userId, shoppingCartItemAction.ItemId, shoppingCartItemAction.ItemAction,
+                    shoppingCartItemAction.Quantity);
             return Ok();
         }
         catch (Exception e)
@@ -145,7 +121,7 @@ public class ShopItemController : ControllerBase
 
         try
         {
-            await _uow.ShopItemRepository.RemoveAllCartItems(userId);
+            await _bll.ShopItemService.RemoveAllCartItems(userId);
             return Ok();
         }
         catch (Exception e)
@@ -167,8 +143,8 @@ public class ShopItemController : ControllerBase
         // Get shop items from the database
         try
         {
-            var items = await _uow.ShopItemRepository.AllAsync();
-            return items.Select(e => _listMapper.Map(e)).ToList();
+            var shopItems = await _bll.ShopItemService.AllAsync();
+            return Ok(shopItems);
         }
         catch (Exception e)
         {
@@ -191,8 +167,8 @@ public class ShopItemController : ControllerBase
         
         try
         {
-            var item = await _uow.ShopItemRepository.FindAsync(itemId);
-            if (item != null) return Ok(_detailsMapper.Map(item));
+            var item = await _bll.ShopItemService.FindAsync(itemId);
+            if (item != null) return Ok(item);
             return FormatErrorResponse("Error finding the shop item:");
         }
         catch (Exception e)

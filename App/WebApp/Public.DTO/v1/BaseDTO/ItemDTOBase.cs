@@ -1,11 +1,9 @@
+using Base.Domain.Contracts;
+
 namespace Public.DTO.v1.BaseDTO;
 
-public class ItemDtoBase
+public class ItemDtoBase: IDomainEntityId
 {
-    /// <summary>
-    /// Unique identifier of the item.
-    /// </summary>
-    public Guid Id { get; set; }
     /// <summary>
     /// Name of the item.
     /// </summary>
@@ -22,4 +20,6 @@ public class ItemDtoBase
     /// Picture of the item (if present).
     /// </summary>
     public byte[]? SubjectPicture { get; set; }
+
+    public Guid Id { get; set; }
 }

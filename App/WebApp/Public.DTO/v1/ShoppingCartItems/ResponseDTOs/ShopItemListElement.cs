@@ -1,6 +1,6 @@
 using Public.DTO.v1.BaseDTO;
 
-namespace Public.DTO.v1.ShopItems;
+namespace Public.DTO.v1.ShoppingCartItems.ResponseDTOs;
 
 /// <summary>
 /// Represents the details DTO an the item.

@@ -11,7 +11,4 @@ public interface IBaseRepository<TEntity, in TKey>
 {
     Task<IEnumerable<TEntity>> AllAsync();
     Task<TEntity?> FindAsync(TKey id);
-    TEntity Add(TEntity entity);
-    TEntity Remove(TEntity entity);
-    Task<TEntity?> RemoveAsync(TKey id);
 }

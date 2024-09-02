@@ -1,6 +1,6 @@
 using App.Domain.Entities;
 using AutoMapper;
-using Public.DTO.v1.ShopItems;
+using Public.DTO.v1.ShoppingCartItems.ResponseDTOs;
 
 namespace Public.DTO;
 

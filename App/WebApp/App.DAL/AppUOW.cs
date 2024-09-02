@@ -4,7 +4,7 @@ using Base.DAL;
 
 namespace App.DAL;
 
-// ReSharper disable InconsistentNaming
+// ReSharper disable once InconsistentNaming
 public class AppUOW(ApplicationDbContext dataContext) : EFBaseUOW<ApplicationDbContext>(dataContext), IAppUOW
 {
     private IShopItemRepository? _shopItemsRepository;
