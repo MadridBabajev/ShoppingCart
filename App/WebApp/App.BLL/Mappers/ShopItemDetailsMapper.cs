@@ -5,7 +5,4 @@ using Public.DTO.v1.ShoppingCartItems.ResponseDTOs;
 
 namespace App.BLL.Mappers;
 
-public class ShopItemDetailsMapper(IMapper mapper) : BaseMapper<ShopItemDetails, ShopItem>(mapper)
-{
-    
-};
+public class ShopItemDetailsMapper(IMapper mapper) : BaseMapper<ShopItemDetails, ShopItem>(mapper);

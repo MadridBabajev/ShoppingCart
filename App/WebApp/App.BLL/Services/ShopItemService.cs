@@ -4,13 +4,12 @@ using App.BLL.Mappers;
 using App.DAL.Contracts;
 using App.Domain.Entities;
 using Base.BLL;
-using Base.Mapper.Contracts;
 using Public.DTO.v1.ShoppingCartItems.RequestDTOs;
 using Public.DTO.v1.ShoppingCartItems.ResponseDTOs;
 
 namespace App.BLL.Services;
 
-public class ShopItemService(IAppUOW uow, IMapper<ShopItemDetails, ShopItem> itemDetailsMapper,
+public class ShopItemService(IAppUOW uow, ShopItemDetailsMapper itemDetailsMapper,
         ShopItemListElemMapper itemListElementMapper)
     : BaseEntityService<ShopItemDetails, ShopItem, IShopItemRepository>(uow.ShopItemRepository, itemDetailsMapper),
         IShopItemService
@@ -21,10 +20,9 @@ public class ShopItemService(IAppUOW uow, IMapper<ShopItemDetails, ShopItem> ite
         return items.Select(e => itemListElementMapper.Map(e)).ToList();
     }
 
-    public new async Task<ShopItem?> FindAsync(Guid id)
-    {
-        return await uow.ShopItemRepository.FindAsync(id);
-    }
+    public new async Task<ShopItemDetails?> FindAsync(Guid id)
+        => itemDetailsMapper.Map(await uow.ShopItemRepository.FindAsync(id));
+    
     
     public async Task<IEnumerable<ShopItemListElement?>> GetCartItems(Guid userId)
     {
