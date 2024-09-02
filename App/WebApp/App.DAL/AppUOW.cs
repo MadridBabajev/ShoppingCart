@@ -8,6 +8,6 @@ namespace App.DAL;
 public class AppUOW(ApplicationDbContext dataContext) : EFBaseUOW<ApplicationDbContext>(dataContext), IAppUOW
 {
     private IShopItemRepository? _shopItemsRepository;
-    public IShopItemRepository ShoppingCartRepository =>
+    public IShopItemRepository ShopItemRepository =>
         _shopItemsRepository ??= new ShopItemRepository(UowDbContext);
 }

@@ -52,7 +52,7 @@ public class ShopItemController : ControllerBase
         Guid userId = User.GetUserId();
         try
         {
-            var cartItems = await _uow.ShoppingCartRepository.GetCartItems(userId);
+            var cartItems = await _uow.ShopItemRepository.GetCartItems(userId);
             return cartItems.Select(e => _listMapper.MapShoppingCartItemToShopItemListElem(e)).ToList();
 
         }
@@ -78,7 +78,7 @@ public class ShopItemController : ControllerBase
 
         try
         {
-            var item = await _uow.ShoppingCartRepository.GetCartItem(userId, itemId);
+            var item = await _uow.ShopItemRepository.GetCartItem(userId, itemId);
             if (item != null) return Ok(_detailsMapper.Map(item));
             return FormatErrorResponse("Error finding the cart item:");
         }
@@ -107,15 +107,15 @@ public class ShopItemController : ControllerBase
             switch (shoppingCartItemAction.ItemAction)
             {
                 case ECartItemActions.Increment:
-                    await _uow.ShoppingCartRepository
+                    await _uow.ShopItemRepository
                         .AddCartItem(userId, shoppingCartItemAction.ItemId);
                     break;
                 case ECartItemActions.Decrement:
-                    await _uow.ShoppingCartRepository
+                    await _uow.ShopItemRepository
                         .RemoveCartItem(userId, shoppingCartItemAction.ItemId);
                     break;
                 case ECartItemActions.SetAmount:
-                    await _uow.ShoppingCartRepository
+                    await _uow.ShopItemRepository
                         .SetCartItemQuantity(userId, shoppingCartItemAction.ItemId, shoppingCartItemAction.Quantity);
                     break;
                 default:
@@ -145,7 +145,7 @@ public class ShopItemController : ControllerBase
 
         try
         {
-            await _uow.ShoppingCartRepository.RemoveAllCartItems(userId);
+            await _uow.ShopItemRepository.RemoveAllCartItems(userId);
             return Ok();
         }
         catch (Exception e)
@@ -167,7 +167,7 @@ public class ShopItemController : ControllerBase
         // Get shop items from the database
         try
         {
-            var items = await _uow.ShoppingCartRepository.AllAsync();
+            var items = await _uow.ShopItemRepository.AllAsync();
             return items.Select(e => _listMapper.Map(e)).ToList();
         }
         catch (Exception e)
@@ -191,7 +191,7 @@ public class ShopItemController : ControllerBase
         
         try
         {
-            var item = await _uow.ShoppingCartRepository.FindAsync(itemId);
+            var item = await _uow.ShopItemRepository.FindAsync(itemId);
             if (item != null) return Ok(_detailsMapper.Map(item));
             return FormatErrorResponse("Error finding the shop item:");
         }
