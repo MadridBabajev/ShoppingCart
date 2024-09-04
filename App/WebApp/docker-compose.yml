@@ -5,7 +5,8 @@ services:
       context: ./
       dockerfile: Dockerfile
     ports:
-      - "8000:8080"
+      - "8000:8080"  # HTTP
+      - "8001:443"   # HTTPS
     depends_on:
       - shopping-cart-postgres-v3
     environment:

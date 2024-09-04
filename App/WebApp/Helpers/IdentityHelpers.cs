@@ -13,27 +13,6 @@ public static class IdentityHelpers
         return Guid.Parse(
             user.Claims.Single(c => c.Type == ClaimTypes.NameIdentifier).Value);
     }
-    
-    public static string GenerateJwt(IEnumerable<Claim> claims, string key,
-        string issuer, string audience,
-        int expiresInSeconds)
-    {
-        var signingKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key));
-        var signingCredentials = new SigningCredentials(signingKey, SecurityAlgorithms.HmacSha256);
-        var expires = DateTime.Now.AddSeconds(expiresInSeconds);
-        
-        var claimsList = claims.ToList();
-        
-        var token = new JwtSecurityToken(
-            issuer: issuer,
-            audience: audience,
-            claims: claimsList,
-            expires: expires,
-            signingCredentials: signingCredentials
-        );
-        
-        return new JwtSecurityTokenHandler().WriteToken(token);
-    }
 
     public static bool ValidateToken(string jwt,  string key,
         string issuer, string audience, bool ignoreExpiration = true)
@@ -41,19 +20,18 @@ public static class IdentityHelpers
         var tokenHandler = new JwtSecurityTokenHandler();
         var validationParameters = GetValidationParameters(key, issuer, audience);
 
-        SecurityToken validatedToken;
         try
         {
-            var principal = tokenHandler.ValidateToken(jwt, validationParameters, out validatedToken);
+            tokenHandler.ValidateToken(jwt, validationParameters, out _);
         }
         catch (SecurityTokenExpiredException)
         {
-            // We are refreshing expired jwt
+            // is it ok to be expired? since we are refreshing expired jwt
             return ignoreExpiration;
         }
         catch (Exception)
         {
-            // Something else was wrong
+            // something else was wrong
             return false;
         }
 

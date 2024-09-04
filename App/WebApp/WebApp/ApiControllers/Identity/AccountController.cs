@@ -2,6 +2,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Net;
 using System.Net.Mime;
 using System.Security.Claims;
+using System.Text;
 using App.DAL;
 using App.Domain.Identity;
 using Asp.Versioning;
@@ -11,6 +12,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using Public.DTO.v1.ApiResponses;
 using Public.DTO.v1.Identity;
 
@@ -33,11 +35,6 @@ public class AccountController : ControllerBase
     /// <summary>
     /// Initializes a new instance of the AccountController class.
     /// </summary>
-    /// <param name="signInManager">Provides the APIs for user sign in.</param>
-    /// <param name="userManager">Provides the APIs for managing user in a persistence store.</param>
-    /// <param name="configuration">Represents a set of key/value application configuration properties.</param>
-    /// <param name="logger">Represents a type used to perform logging.</param>
-    /// <param name="context">The database context.</param>
     public AccountController(SignInManager<AppUser> signInManager, UserManager<AppUser> userManager,
         IConfiguration configuration, ILogger<AccountController> logger, ApplicationDbContext context)
     {
@@ -49,159 +46,141 @@ public class AccountController : ControllerBase
     }
 
     /// <summary>
-    /// Register new user to the system.
+    /// Registers a new user in the system.
     /// </summary>
-    /// <param name="registrationData">User registration data.</param>
-    /// <param name="expiresInSeconds">Optional, overrides default JWT token expiration value.</param>
-    /// <returns>JWTResponse with JWT and refresh token.</returns>
+    /// <param name="registrationData">User registration details.</param>
+    /// <param name="expiresInSeconds">Optional expiration time for JWT in seconds.</param>
+    /// <returns>A JWT token and refresh token if registration is successful.</returns>
     [HttpPost]
     [Produces(MediaTypeNames.Application.Json)]
     [ProducesResponseType(typeof(JWTResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(RestApiErrorResponse), StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<JWTResponse>> Register([FromBody] Register registrationData,
-        [FromQuery] int expiresInSeconds)
+        [FromQuery] int? expiresInSeconds)
     {
-        if (expiresInSeconds <= 0) expiresInSeconds = int.MaxValue;
-
-        _logger.LogInformation("Attempting to register a new user with email {Email}", registrationData.Email);
+        // Set default JWT expiration if not provided
+        expiresInSeconds ??= _configuration.GetValue<int>("JWT:ExpiresInSeconds");
 
         // Check if the user is already registered
         var existingUsers = await _userManager.Users.Where(u => u.Email == registrationData.Email).ToListAsync();
-
         if (existingUsers.Any())
         {
-            _logger.LogWarning("User registration failed: Email {Email} is already in use", registrationData.Email);
-            return FormatErrorResponse($"User with email {registrationData.Email} is already registered.");
+            _logger.LogWarning("User with email {} is already registered", registrationData.Email);
+            return FormatErrorResponse($"User with email {registrationData.Email} is already registered");
         }
 
+        // Validate password confirmation
         if (!registrationData.Password.Equals(registrationData.ConfirmPassword))
         {
-            _logger.LogWarning("User registration failed: Password and confirm password do not match for email {Email}", registrationData.Email);
+            _logger.LogWarning("Password and confirm password do not match");
             return FormatErrorResponse("Password and Confirmation password do not match");
         }
 
-        // Register user
+        // Create new user and refresh token
         var refreshToken = new AppRefreshToken();
-
         var appUser = new AppUser
         {
             Email = registrationData.Email,
-            UserName = $"{registrationData.Email}",
+            UserName = registrationData.Email,
             FirstName = registrationData.Firstname,
             LastName = registrationData.Lastname,
-            AppRefreshTokens = new List<AppRefreshToken> { refreshToken }
+            AppRefreshTokens = new List<AppRefreshToken> {refreshToken},
         };
         refreshToken.AppUser = appUser;
 
+        // Register user with the provided password
         var result = await _userManager.CreateAsync(appUser, registrationData.Password);
         if (!result.Succeeded)
         {
-            var errorDescription = result.Errors.First().Description;
-            _logger.LogError("User registration failed: {ErrorDescription}", errorDescription);
-            return FormatErrorResponse(errorDescription);
+            _logger.LogError("Error registering user: {ErrorDescription}", result.Errors.First().Description);
+            return FormatErrorResponse(result.Errors.First().Description);
         }
 
         await _context.SaveChangesAsync();
-        _logger.LogInformation("User {Email} registered successfully", registrationData.Email);
 
-        // Save user's full name into claims
+        // Add claims for the new user
         result = await _userManager.AddClaimsAsync(appUser, new List<Claim>
         {
             new(ClaimTypes.GivenName, appUser.FirstName),
             new(ClaimTypes.Surname, appUser.LastName)
         });
-
         if (!result.Succeeded)
         {
-            _logger.LogError("Failed to add claims for user {Email}: {ErrorDescription}", appUser.Email, result.Errors.First().Description);
             return FormatErrorResponse(result.Errors.First().Description);
         }
 
-        // Get full user from system with fixed data
+        // Find the newly registered user
         appUser = await _userManager.FindByEmailAsync(appUser.Email);
         if (appUser == null)
         {
-            _logger.LogError("User {Email} not found after registration", registrationData.Email);
+            _logger.LogWarning("User with email {} not found after registration", registrationData.Email);
             return BadRequest(new RestApiErrorResponse
             {
                 Status = HttpStatusCode.BadRequest,
-                Error = $"User with email {registrationData.Email} is not found after registration"
+                Error = $"User with email {registrationData.Email} not found after registration"
             });
         }
 
+        // Create claims principal and generate JWT
         var claimsPrincipal = await _signInManager.CreateUserPrincipalAsync(appUser);
-
-        // Generate JWT
-        (string jwt, int jwtExpiration) = GenerateJwt(claimsPrincipal.Claims, expiresInSeconds);
+        var jwt = GenerateJwt(claimsPrincipal.Claims, (int)expiresInSeconds);
 
         var res = new JWTResponse
         {
             JWT = jwt,
             RefreshToken = refreshToken.RefreshToken,
-            ExpiresIn = jwtExpiration
+            ExpiresIn = (int)expiresInSeconds
         };
 
-        _logger.LogInformation("JWT generated successfully for user {Email}", appUser.Email);
         return Ok(res);
     }
 
     /// <summary>
-    /// Log in to the system 
+    /// Logs in a user by verifying their credentials.
     /// </summary>
-    /// <param name="loginData">User login info.</param>
-    /// <param name="expiresInSeconds">optional, override default value.</param>
-    /// <returns>JWTResponse with JWT and refresh token</returns>
+    /// <param name="loginData">User login information (email and password).</param>
+    /// <param name="expiresInSeconds">Optional expiration time for JWT in seconds.</param>
+    /// <returns>A JWT token and refresh token if login is successful.</returns>
     [HttpPost]
     [Produces(MediaTypeNames.Application.Json)]
     [ProducesResponseType(typeof(JWTResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(RestApiErrorResponse), StatusCodes.Status400BadRequest)]
-    [HttpPost]
-    public async Task<ActionResult<JWTResponse>> LogIn([FromBody] Login loginData, [FromQuery] int expiresInSeconds)
+    public async Task<ActionResult<JWTResponse>> LogIn([FromBody] Login loginData, [FromQuery] int? expiresInSeconds)
     {
-        if (expiresInSeconds <= 0) expiresInSeconds = _configuration.GetValue<int>("JWT:ExpiresInSeconds");
+        expiresInSeconds ??= _configuration.GetValue<int>("JWT:ExpiresInSeconds");
 
-        _logger.LogInformation("User {Email} attempting to log in", loginData.Email);
-
-        // Verify if the user exists
-        var appUser = await _userManager.Users
-            .Where(u => u.Email == loginData.Email).FirstOrDefaultAsync();
-
+        // Find the user by email
+        var appUser = await _userManager.Users.FirstOrDefaultAsync(u => u.Email == loginData.Email);
         if (appUser == null)
         {
-            _logger.LogWarning("Login failed: No user found with email {Email}", loginData.Email);
+            _logger.LogWarning("Login failed, email {} not found", loginData.Email);
             return FormatErrorResponse("No user with the provided email was found");
         }
 
-        // Verify username and password
+        // Verify password
         var result = await _signInManager.CheckPasswordSignInAsync(appUser, loginData.Password, false);
         if (!result.Succeeded)
         {
-            _logger.LogWarning("Login failed: Incorrect password for user {Email}", loginData.Email);
+            _logger.LogWarning("Login failed, incorrect password for user {}", loginData.Email);
             return FormatErrorResponse("User/Password problem");
         }
 
-        _logger.LogInformation("User {Email} logged in successfully", loginData.Email);
-
-        // Get claims based user
+        // Create claims principal and generate JWT
         var claimsPrincipal = await _signInManager.CreateUserPrincipalAsync(appUser);
+        var jwt = GenerateJwt(claimsPrincipal.Claims, (int)expiresInSeconds);
 
-        appUser.AppRefreshTokens = await _context
-            .Entry(appUser)
+        // Add a new refresh token and remove expired ones
+        appUser.AppRefreshTokens = await _context.Entry(appUser)
             .Collection(a => a.AppRefreshTokens!)
             .Query()
             .Where(t => t.AppUserId == appUser.Id)
             .ToListAsync();
 
-        // Remove expired tokens
         foreach (var userRefreshToken in appUser.AppRefreshTokens)
         {
-            if (
-                userRefreshToken.ExpirationDT < DateTime.UtcNow &&
-                (
-                    userRefreshToken.PreviousExpirationDT == null ||
-                    userRefreshToken.PreviousExpirationDT < DateTime.UtcNow
-                )
-            )
+            if (userRefreshToken.ExpirationDT < DateTime.UtcNow && (userRefreshToken.PreviousExpirationDT == null ||
+                                                                    userRefreshToken.PreviousExpirationDT <
+                                                                    DateTime.UtcNow))
             {
                 _context.AppRefreshTokens.Remove(userRefreshToken);
             }
@@ -214,98 +193,88 @@ public class AccountController : ControllerBase
         _context.AppRefreshTokens.Add(refreshToken);
         await _context.SaveChangesAsync();
 
-        // Generate JWT
-        (string jwt, int jwtExpiration) = GenerateJwt(claimsPrincipal.Claims, expiresInSeconds);
-
         var res = new JWTResponse
         {
             JWT = jwt,
             RefreshToken = refreshToken.RefreshToken,
-            ExpiresIn = jwtExpiration
+            ExpiresIn = (int)expiresInSeconds
         };
 
-        _logger.LogInformation("JWT generated successfully for user {Email}", appUser.Email);
         return Ok(res);
     }
 
     /// <summary>
-    /// Refreshes the JWT token for a user.
+    /// Refreshes the JWT using a valid refresh token.
     /// </summary>
-    /// <param name="refreshTokenModel">The refresh token model.</param>
-    /// <param name="expiresInSeconds">The new JWT token expiration duration in seconds.</param>
-    /// <returns>The new JWT and refresh token, or an error message if the operation fails.</returns>
+    /// <param name="refreshTokenModel">Refresh token model containing JWT and refresh token.</param>
+    /// <param name="expiresInSeconds">Optional new JWT expiration time.</param>
+    /// <returns>New JWT and refresh token, or error message.</returns>
     [HttpPost]
-    public async Task<ActionResult> RefreshToken(
-        [FromBody] RefreshTokenModel refreshTokenModel,
-        [FromQuery] int expiresInSeconds)
+    public async Task<ActionResult> RefreshToken([FromBody] RefreshTokenModel refreshTokenModel, [FromQuery] int? expiresInSeconds)
     {
-        if (expiresInSeconds <= 0) expiresInSeconds = int.MaxValue;
+        expiresInSeconds ??= _configuration.GetValue<int>("JWT:ExpiresInSeconds");
 
-        _logger.LogInformation("User attempting to refresh token");
-
+        // Validate and read the provided JWT
         JwtSecurityToken jwtToken;
-        // Get user info from jwt
         try
         {
             jwtToken = new JwtSecurityTokenHandler().ReadJwtToken(refreshTokenModel.Jwt);
-            if (jwtToken == null) return FormatErrorResponse("Token is missing");
+            if (jwtToken == null)
+            {
+                return FormatErrorResponse("No token");
+            }
         }
         catch (Exception e)
         {
-            _logger.LogError("Token parsing failed: {ErrorMessage}", e.Message);
-            return FormatErrorResponse($"Cant parse the token, {e.Message}");
+            return FormatErrorResponse($"Cannot parse the token: {e.Message}");
         }
 
+        // Validate token against secret key, issuer, and audience
         if (!IdentityHelpers.ValidateToken(refreshTokenModel.Jwt, _configuration["JWT:Key"]!,
-                _configuration["JWT:Issuer"]!,
-                _configuration["JWT:Audience"]!))
+            _configuration["JWT:Issuer"]!, _configuration["JWT:Audience"]!))
         {
-            _logger.LogWarning("JWT validation failed");
-            return FormatErrorResponse("JWT validation fail");
+            return FormatErrorResponse("JWT validation failed");
         }
 
+        // Extract user email from JWT and fetch the user
         var userEmail = jwtToken.Claims.FirstOrDefault(x => x.Type == ClaimTypes.Email)?.Value;
-        if (userEmail == null) return FormatErrorResponse("No email in jwt");
+        if (userEmail == null)
+        {
+            return FormatErrorResponse("No email in JWT");
+        }
 
-        // Get user and tokens
         var appUser = await _userManager.Users
             .Include(u => u.AppRefreshTokens)
             .FirstOrDefaultAsync(u => u.Email == userEmail);
         if (appUser == null)
         {
-            _logger.LogWarning("Refresh token failed: User with email {Email} not found", userEmail);
             return FormatErrorResponse($"User with email {userEmail} not found");
         }
 
-        // Load and compare refresh tokens
+        // Load and validate refresh tokens
         await _context.Entry(appUser)
             .Collection(u => u.AppRefreshTokens!)
             .Query()
             .Where(x =>
                 (x.RefreshToken == refreshTokenModel.RefreshToken && x.ExpirationDT > DateTime.UtcNow) ||
                 (x.PreviousRefreshToken == refreshTokenModel.RefreshToken &&
-                 x.PreviousExpirationDT > DateTime.UtcNow)
-            )
+                 x.PreviousExpirationDT > DateTime.UtcNow))
             .ToListAsync();
 
         if (appUser.AppRefreshTokens == null || appUser.AppRefreshTokens.Count == 0)
         {
-            _logger.LogWarning("Refresh token failed: No valid refresh tokens found for user {Email}", userEmail);
-            return FormatErrorResponse(
-                $"RefreshTokens collection is null or empty - {appUser.AppRefreshTokens?.Count}");
+            return FormatErrorResponse("No valid refresh tokens found");
         }
 
-        // Generate new jwt
+        // Generate new JWT and update refresh token
         var claimsPrincipal = await _signInManager.CreateUserPrincipalAsync(appUser);
-        (string jwt, int jwtExpiration) = GenerateJwt(claimsPrincipal.Claims, expiresInSeconds);
+        var jwt = GenerateJwt(claimsPrincipal.Claims, (int)expiresInSeconds);
 
-        // Create a new refresh token, keep old one still valid for some time
         var refreshToken = appUser.AppRefreshTokens.First();
         if (refreshToken.RefreshToken == refreshTokenModel.RefreshToken)
         {
             refreshToken.PreviousRefreshToken = refreshToken.RefreshToken;
             refreshToken.PreviousExpirationDT = DateTime.UtcNow.AddMinutes(1);
-
             refreshToken.RefreshToken = Guid.NewGuid().ToString();
             refreshToken.ExpirationDT = DateTime.UtcNow.AddDays(14);
 
@@ -316,44 +285,37 @@ public class AccountController : ControllerBase
         {
             JWT = jwt,
             RefreshToken = refreshToken.RefreshToken,
-            ExpiresIn = jwtExpiration
+            ExpiresIn = (int)expiresInSeconds
         };
 
-        _logger.LogInformation("JWT refreshed successfully for user {Email}", userEmail);
         return Ok(res);
     }
 
     /// <summary>
     /// Logs out a user by invalidating their refresh token.
     /// </summary>
-    /// <param name="logout">The logout request containing the refresh token to invalidate.</param>
-    /// <returns>An OK result if the logout is successful, otherwise an error message.</returns>
+    /// <param name="logout">Logout request containing the refresh token.</param>
+    /// <returns>OK result if logout is successful, or an error message.</returns>
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     [HttpPost]
-    public async Task<ActionResult> Logout(
-        [FromBody] Logout logout)
+    public async Task<ActionResult> Logout([FromBody] Logout logout)
     {
-        // Delete the refresh token - so user is kicked out after jwt expiration
+        // Get the current user's ID
         var userId = User.GetUserId();
 
-        _logger.LogInformation("User {UserId} attempting to log out", userId);
-
-        var appUser = await _context.Users
-            .Where(u => u.Id == userId)
-            .SingleOrDefaultAsync();
+        // Find the user by ID
+        var appUser = await _context.Users.SingleOrDefaultAsync(u => u.Id == userId);
         if (appUser == null)
         {
-            _logger.LogWarning("Logout failed: No user found with ID {UserId}", userId);
             return FormatErrorResponse("No user was found");
         }
 
+        // Find and remove the refresh tokens
         await _context.Entry(appUser)
             .Collection(u => u.AppRefreshTokens!)
             .Query()
             .Where(x =>
-                x.RefreshToken == logout.RefreshToken ||
-                x.PreviousRefreshToken == logout.RefreshToken
-            )
+                x.RefreshToken == logout.RefreshToken || x.PreviousRefreshToken == logout.RefreshToken)
             .ToListAsync();
 
         foreach (var appRefreshToken in appUser.AppRefreshTokens!)
@@ -363,26 +325,37 @@ public class AccountController : ControllerBase
 
         var deleteCount = await _context.SaveChangesAsync();
 
-        _logger.LogInformation("User {UserId} logged out successfully, {DeleteCount} tokens deleted", userId, deleteCount);
         return Ok(new { TokenDeleteCount = deleteCount });
     }
-    
-    private (string jwt, int jwtExpiration) GenerateJwt(IEnumerable<Claim> claims, int expiresInSeconds)
-    {
-        int expiresIn = expiresInSeconds < _configuration.GetValue<int>("JWT:ExpiresInSeconds")
-            ? expiresInSeconds
-            : _configuration.GetValue<int>("JWT:ExpiresInSeconds");
 
-        var jwt = IdentityHelpers.GenerateJwt(
-            claims,
-            _configuration["JWT:Key"]!,
-            _configuration["JWT:Issuer"]!,
-            _configuration["JWT:Audience"]!,
-            expiresInSeconds
+    /// <summary>
+    /// Generates a JWT token with claims and expiration time.
+    /// </summary>
+    /// <param name="claims">Claims to include in the JWT.</param>
+    /// <param name="expiresInSeconds">Expiration time in seconds.</param>
+    /// <returns>The generated JWT as a string.</returns>
+    private string GenerateJwt(IEnumerable<Claim> claims, int expiresInSeconds)
+    {
+        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["JWT:Key"]!));
+        var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+        var expires = DateTime.Now.AddSeconds(expiresInSeconds);
+
+        var token = new JwtSecurityToken(
+            issuer: _configuration["JWT:Issuer"],
+            audience: _configuration["JWT:Audience"],
+            claims: claims,
+            expires: expires,
+            signingCredentials: creds
         );
-        return (jwt, expiresIn);
+
+        return new JwtSecurityTokenHandler().WriteToken(token);
     }
 
+    /// <summary>
+    /// Formats an error response with a message.
+    /// </summary>
+    /// <param name="message">The error message.</param>
+    /// <returns>BadRequest with an error response.</returns>
     private ActionResult FormatErrorResponse(string message)
     {
         return BadRequest(new RestApiErrorResponse
