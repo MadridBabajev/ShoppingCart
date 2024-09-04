@@ -29,5 +29,8 @@ dotnet ef database update --project App.DAL --startup-project WebApp
 #### 4.3 Check whether the migration has been correctly applied. Connect to the database using the connection string from appsettings.json inside of WebApp
 
 ## 5. Run the application
+~~~bash
+docker-compose up --build
+~~~
 
 
