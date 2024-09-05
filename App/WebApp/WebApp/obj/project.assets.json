@@ -1827,7 +1827,8 @@
         "framework": ".NETCoreApp,Version=v8.0",
         "dependencies": {
           "App.Domain": "1.0.0",
-          "Base.DAL.Contracts": "1.0.0"
+          "Base.DAL.Contracts": "1.0.0",
+          "Public.DTO": "1.0.0"
         },
         "compile": {
           "bin/placeholder/App.DAL.Contracts.dll": {}

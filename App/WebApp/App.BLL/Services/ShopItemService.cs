@@ -14,10 +14,20 @@ public class ShopItemService(IAppUOW uow, ShopItemDetailsMapper itemDetailsMappe
     : BaseEntityService<ShopItemDetails, ShopItem, IShopItemRepository>(uow.ShopItemRepository, itemDetailsMapper),
         IShopItemService
 {
-    public new async Task<IEnumerable<ShopItemListElement?>> AllAsync()
+    public async Task<IEnumerable<ShopItemListElement?>> AllAsync(Guid? userId)
     {
-        var items = await uow.ShopItemRepository.AllAsync();
-        return items.Select(e => itemListElementMapper.Map(e)).ToList();
+        IEnumerable<ShopItem> items;
+
+        if (userId == null)
+        {
+            // User is not authenticated, fetch all items without attaching quantity
+            items = await uow.ShopItemRepository.AllAsync();
+            return items.Select(e => itemListElementMapper.Map(e)).ToList();
+        }
+
+        // User is authenticated, fetch items along with their cart quantity for the user
+        items = await uow.ShopItemRepository.GetCatalogItemsWithQuantityTaken((Guid)userId);
+        return items.Select(e => itemListElementMapper.MapToShopItemListElem(e, (Guid)userId)).ToList();
     }
 
     public new async Task<ShopItemDetails?> FindAsync(Guid id)

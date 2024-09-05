@@ -70,14 +70,14 @@ public class ShopItemController : ControllerBase
     [ProducesResponseType(typeof(ShopItemDetails), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
-    public async Task<IActionResult> GetShoppingCartItemDetails([FromBody] Guid itemId)
+    public async Task<IActionResult> GetShoppingCartItemDetails([FromQuery] string itemId)
     {
         Guid userId = User.GetUserId();
         _logger.LogInformation("Fetching details for cart item {ItemId} for user {UserId}", itemId, userId);
 
         try
         {
-            var item = await _bll.ShopItemService.GetCartItem(userId, itemId);
+            var item = await _bll.ShopItemService.GetCartItem(userId, Guid.Parse(itemId));
             if (item != null)
             {
                 _logger.LogInformation("Successfully retrieved details for cart item {ItemId} for user {UserId}", itemId, userId);
@@ -160,9 +160,21 @@ public class ShopItemController : ControllerBase
     {
         _logger.LogInformation("Fetching all shop items");
 
+        // Try to get the user ID, if available (optional authorization)
+        Guid? userId = null;
         try
         {
-            var shopItems = await _bll.ShopItemService.AllAsync();
+            userId = User.GetUserId();
+        }
+        catch (Exception)
+        {
+            // No user is attached, proceed as unauthenticated
+        }
+
+        try
+        {
+            // Fetch all items, with or without quantity depending on user authentication
+            var shopItems = await _bll.ShopItemService.AllAsync(userId);
             _logger.LogInformation("Successfully retrieved {Count} shop items", shopItems.Count());
             return Ok(shopItems);
         }
@@ -183,13 +195,13 @@ public class ShopItemController : ControllerBase
     [ProducesResponseType(typeof(ShopItemDetails), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Policy = "Optional")]
-    public async Task<IActionResult> GetShopItemDetails([FromBody] Guid itemId)
+    public async Task<IActionResult> GetShopItemDetails([FromQuery] string itemId)
     {
         _logger.LogInformation("Fetching details for shop item {ItemId}", itemId);
 
         try
         {
-            var item = await _bll.ShopItemService.FindAsync(itemId);
+            var item = await _bll.ShopItemService.FindAsync(Guid.Parse(itemId));
             if (item != null)
             {
                 _logger.LogInformation("Successfully retrieved details for shop item {ItemId}", itemId);

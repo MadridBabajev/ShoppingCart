@@ -20,9 +20,10 @@ public static class IdentityHelpers
         var tokenHandler = new JwtSecurityTokenHandler();
         var validationParameters = GetValidationParameters(key, issuer, audience);
 
+        SecurityToken validatedToken;
         try
         {
-            tokenHandler.ValidateToken(jwt, validationParameters, out _);
+            var principal = tokenHandler.ValidateToken(jwt, validationParameters, out validatedToken);
         }
         catch (SecurityTokenExpiredException)
         {

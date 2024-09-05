@@ -5,6 +5,10 @@ namespace Public.DTO.v1.BaseDTO;
 public class ItemDtoBase: IDomainEntityId
 {
     /// <summary>
+    /// ID of the item.
+    /// </summary>
+    public Guid Id { get; set; }
+    /// <summary>
     /// Name of the item.
     /// </summary>
     public string Name { get; set; } = default!;
@@ -19,7 +23,13 @@ public class ItemDtoBase: IDomainEntityId
     /// <summary>
     /// Picture of the item (if present).
     /// </summary>
-    public byte[]? SubjectPicture { get; set; }
-
-    public Guid Id { get; set; }
+    public byte[]? ItemPicture { get; set; }
+    /// <summary>
+    /// Quantity of the item in cart.
+    /// </summary>
+    public int? QuantityTaken { get; set; } = default!;
+    /// <summary>
+    /// Quantity of the item in stock.
+    /// </summary>
+    public int? StockAmount { get; set; } = default!;
 }

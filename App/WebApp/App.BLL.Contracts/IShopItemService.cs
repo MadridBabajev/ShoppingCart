@@ -8,6 +8,7 @@ namespace App.BLL.Contracts;
 public interface IShopItemService: IBaseRepository<ShopItemDetails>
 {
     // custom methods
+    Task<IEnumerable<ShopItemListElement?>> AllAsync(Guid? userId);
     Task AddRemoveCartItem(Guid userId, Guid itemId, ECartItemActions action, int? quantity);
     Task RemoveAllCartItems(Guid userId);
     Task<IEnumerable<ShopItemListElement?>> GetCartItems(Guid userId);
