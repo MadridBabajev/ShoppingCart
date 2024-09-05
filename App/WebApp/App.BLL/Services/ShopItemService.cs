@@ -40,10 +40,21 @@ public class ShopItemService(IAppUOW uow, ShopItemDetailsMapper itemDetailsMappe
         return cartItems.Select(e => itemListElementMapper.MapToShopItemListElem(e.Item!, userId)).ToList();
     }
 
-    public async Task<ShopItemDetails?> GetCartItem(Guid userId, Guid itemId)
+    public async Task<ShopItemDetails?> GetShopItem(Guid? userId, Guid itemId)
     {
-        var cartItem = await uow.ShopItemRepository.GetCartItem(userId, itemId);
-        return itemDetailsMapper.Map(cartItem);
+        ShopItem? item;
+
+        if (userId != null)
+        {
+            // User is authenticated, fetch all the item's data
+            item = await uow.ShopItemRepository.GetCartItem((Guid)userId, itemId);
+            if (item == null) throw new KeyNotFoundException("Item was not found.");
+            return itemDetailsMapper.MapForAuthenticatedUser(item, (Guid)userId);
+        }
+
+        // User is not authenticated, send only the item data
+        item = await uow.ShopItemRepository.FindAsync(itemId);
+        return itemDetailsMapper.Map(item);
     }
 
     public async Task AddRemoveCartItem(Guid userId, Guid itemId, ECartItemActions action, int? quantity)

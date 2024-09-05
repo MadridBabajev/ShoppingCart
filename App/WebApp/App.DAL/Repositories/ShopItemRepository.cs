@@ -9,7 +9,6 @@ public class ShopItemRepository : EFBaseRepository<ShopItem, ApplicationDbContex
 {
     public ShopItemRepository(ApplicationDbContext dataContext) : base(dataContext) { }
     
-    // Retrieves all items in the user's cart
     public async Task<IEnumerable<ShoppingCartItem>> GetCartItems(Guid userId)
     {
         var user = await RepositoryDbContext.Users

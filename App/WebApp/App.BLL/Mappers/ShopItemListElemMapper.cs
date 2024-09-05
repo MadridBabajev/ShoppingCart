@@ -5,10 +5,8 @@ using Public.DTO.v1.ShoppingCartItems.ResponseDTOs;
 
 namespace App.BLL.Mappers;
 
-public class ShopItemListElemMapper : BaseMapper<ShopItemListElement, ShopItem>
+public class ShopItemListElemMapper(IMapper mapper) : BaseMapper<ShopItemListElement, ShopItem>(mapper)
 {
-    public ShopItemListElemMapper(IMapper mapper) : base(mapper) { }
-    
     public ShopItemListElement? MapToShopItemListElem(ShopItem shopItem, Guid userId)
     {
         // Map the base shop item properties

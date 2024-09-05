@@ -50,7 +50,7 @@ public class ShopItemServiceUnitTests
                           .Returns(shopItemDetails);
 
         // Act
-        var result = await _shopItemService.GetCartItem(userId, itemId);
+        var result = await _shopItemService.GetShopItem(userId, itemId);
 
         // Assert
         Assert.NotNull(result);
