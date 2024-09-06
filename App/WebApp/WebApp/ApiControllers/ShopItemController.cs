@@ -7,8 +7,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Public.DTO.v1.ApiResponses;
-using Public.DTO.v1.ShoppingCartItems.RequestDTOs;
-using Public.DTO.v1.ShoppingCartItems.ResponseDTOs;
+using Public.DTO.v1.ShoppingCartItems;
 
 namespace WebApp.ApiControllers;
 
@@ -61,34 +60,50 @@ public class ShopItemController : ControllerBase
     }
 
     /// <summary>
-    /// Get the cart item details.
+    /// Get the shop item details.
     /// </summary>
     /// <param name="itemId">The ID of the item.</param>
-    /// <returns>The details of the cart item.</returns>
+    /// <returns>The details of the shop item.</returns>
     [HttpGet]
     [Produces(MediaTypeNames.Application.Json)]
     [ProducesResponseType(typeof(ShopItemDetails), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
-    public async Task<IActionResult> GetShoppingCartItemDetails([FromBody] Guid itemId)
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Policy = "Optional")]
+    public async Task<IActionResult> GetShopItemDetails([FromQuery] string itemId)
     {
-        Guid userId = User.GetUserId();
-        _logger.LogInformation("Fetching details for cart item {ItemId} for user {UserId}", itemId, userId);
+        // Try to get the user ID, if available (optional authorization)
+        Guid? userId = null;
+        try
+        {
+            userId = User.GetUserId();
+        }
+        catch (Exception)
+        {
+            // No user is attached, proceed as unauthenticated
+        }
+
+        string userIdForLogging = userId == null ? "Guest" : userId.ToString()!;
+        _logger.LogInformation("Fetching details for cart item {ItemId} for user {UserId}", itemId, userIdForLogging);
 
         try
         {
-            var item = await _bll.ShopItemService.GetCartItem(userId, itemId);
+            var item = await _bll.ShopItemService.GetShopItem(userId, Guid.Parse(itemId));
             if (item != null)
             {
-                _logger.LogInformation("Successfully retrieved details for cart item {ItemId} for user {UserId}", itemId, userId);
+                _logger.LogInformation("Successfully retrieved details for cart item {ItemId} for user {UserId}", itemId, userIdForLogging);
                 return Ok(item);
             }
-            _logger.LogWarning("Cart item {ItemId} not found for user {UserId}", itemId, userId);
+            _logger.LogWarning("Cart item {ItemId} not found for user {UserId}", itemId, userIdForLogging);
             return FormatErrorResponse("Error finding the cart item:");
+        }
+        catch (KeyNotFoundException e)
+        {
+            _logger.LogError(e, "Could not find an item with id: {ItemId}", itemId);
+            return FormatErrorResponse($"Error getting the item details: {e.Message}");
         }
         catch (Exception e)
         {
-            _logger.LogError(e, "Error getting the item details for cart item {ItemId} for user {UserId}", itemId, userId);
+            _logger.LogError(e, "Error getting the item details for cart item {ItemId} for user {UserId}", itemId, userIdForLogging);
             return FormatErrorResponse($"Error getting the item details: {e.Message}");
         }
     }
@@ -160,9 +175,21 @@ public class ShopItemController : ControllerBase
     {
         _logger.LogInformation("Fetching all shop items");
 
+        // Try to get the user ID, if available (optional authorization)
+        Guid? userId = null;
         try
         {
-            var shopItems = await _bll.ShopItemService.AllAsync();
+            userId = User.GetUserId();
+        }
+        catch (Exception)
+        {
+            // No user is attached, proceed as unauthenticated
+        }
+
+        try
+        {
+            // Fetch all items, with or without quantity depending on user authentication
+            var shopItems = await _bll.ShopItemService.AllAsync(userId);
             _logger.LogInformation("Successfully retrieved {Count} shop items", shopItems.Count());
             return Ok(shopItems);
         }
@@ -170,38 +197,6 @@ public class ShopItemController : ControllerBase
         {
             _logger.LogError(e, "Error retrieving the shop items list");
             return FormatErrorResponse($"Error retrieving the shop items list: {e.Message}");
-        }
-    }
-
-    /// <summary>
-    /// Get the shop item details.
-    /// </summary>
-    /// <param name="itemId">The ID of the item.</param>
-    /// <returns>The details of the shop item.</returns>
-    [HttpGet]
-    [Produces(MediaTypeNames.Application.Json)]
-    [ProducesResponseType(typeof(ShopItemDetails), StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Policy = "Optional")]
-    public async Task<IActionResult> GetShopItemDetails([FromBody] Guid itemId)
-    {
-        _logger.LogInformation("Fetching details for shop item {ItemId}", itemId);
-
-        try
-        {
-            var item = await _bll.ShopItemService.FindAsync(itemId);
-            if (item != null)
-            {
-                _logger.LogInformation("Successfully retrieved details for shop item {ItemId}", itemId);
-                return Ok(item);
-            }
-            _logger.LogWarning("Shop item {ItemId} not found", itemId);
-            return FormatErrorResponse("Error finding the shop item:");
-        }
-        catch (Exception e)
-        {
-            _logger.LogError(e, "Error getting the item details for shop item {ItemId}", itemId);
-            return FormatErrorResponse($"Error getting the item details: {e.Message}");
         }
     }
 

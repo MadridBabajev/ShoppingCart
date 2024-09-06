@@ -1,41 +1,69 @@
-# Use the official .NET SDK image to build the app
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 
-# Set the working directory inside the container
 WORKDIR /src
 
-# Copy the solution and project files
-# Base projects
-COPY *.sln .
-COPY Base.DAL/*.csproj ./Base.DAL/
-COPY Base.DAL.Contracts/*.csproj ./Base.DAL.Contracts/
-COPY Base.Domain/*.csproj ./Base.Domain/
-COPY Base.Domain.Contracts/*.csproj ./Base.Domain.Contracts/
+EXPOSE 80
 
-# App projects
-COPY Helpers/*.csproj ./Helpers/
+# copy csproj and restore as distinct layers
+COPY *.props .
+COPY *.sln .
+
+# copy over all the projects from host to image
+#Base
+COPY Base.BLL.Contracts/*.csproj ./Base.BLL.Contracts/
+COPY Base.BLL/*.csproj ./Base.BLL/
+COPY Base.DAL.Contracts/*.csproj ./Base.DAL.Contracts/
+COPY Base.DAL/*.csproj ./Base.DAL/
+COPY Base.Domain.Contracts/*.csproj ./Base.Domain.Contracts/
+COPY Base.Domain/*.csproj ./Base.Domain/
+COPY Base.Mapper.Contracts/*.csproj ./Base.Mapper.Contracts/
+COPY Base.Mapper/*.csproj ./Base.Mapper/
+
+#App
+COPY Public.DTO/*.csproj ./Public.DTO/
+COPY App.BLL.Contracts/*.csproj ./App.BLL.Contracts/
+COPY App.BLL/*.csproj ./App.BLL/
 COPY App.DAL.Contracts/*.csproj ./App.DAL.Contracts/
 COPY App.DAL/*.csproj ./App.DAL/
 COPY App.Domain/*.csproj ./App.Domain/
+COPY Public.DTO/*.csproj ./Public.DTO/
+COPY Helpers/*.csproj ./Helpers/
 COPY WebApp/*.csproj ./WebApp/
+COPY ApplicationTests/*.csproj ./ApplicationTests/
 
-# Restore the dependencies
 RUN dotnet restore
 
-# Copy the rest of the files and build the app
-COPY . .
+# copy everything else (source files) and build app
+
+#Base
+COPY Base.BLL.Contracts/ ./Base.BLL.Contracts/
+COPY Base.BLL/ ./Base.BLL/
+COPY Base.DAL.Contracts/ ./Base.DAL.Contracts/
+COPY Base.DAL/ ./Base.DAL/
+COPY Base.Domain.Contracts/ ./Base.Domain.Contracts/
+COPY Base.Domain/ ./Base.Domain/
+COPY Base.Mapper.Contracts/ ./Base.Mapper.Contracts/
+COPY Base.Mapper/ ./Base.Mapper/
+
+#App
+COPY Public.DTO/ ./Public.DTO/
+COPY App.BLL.Contracts/ ./App.BLL.Contracts/
+COPY App.BLL/ ./App.BLL/
+COPY App.DAL.Contracts/ ./App.DAL.Contracts/
+COPY App.DAL/ ./App.DAL/
+COPY App.Domain/ ./App.Domain/
+COPY Helpers/ ./Helpers/
+COPY WebApp/ ./WebApp/
+COPY ApplicationTests/ ./ApplicationTests/
 
 WORKDIR /src/WebApp
 RUN dotnet publish -c Release -o out
 
-# Use the official .NET runtime image
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS runtime
 
 WORKDIR /app
 EXPOSE 80
 
-# Copy the build output to the runtime image
-COPY --from=build /src/WebApp/out .
+COPY --from=build /src/WebApp/out ./
 
-# Start the application
 ENTRYPOINT ["dotnet", "WebApp.dll"]

@@ -9,7 +9,6 @@ public class ShopItemRepository : EFBaseRepository<ShopItem, ApplicationDbContex
 {
     public ShopItemRepository(ApplicationDbContext dataContext) : base(dataContext) { }
     
-    // Retrieves all items in the user's cart
     public async Task<IEnumerable<ShoppingCartItem>> GetCartItems(Guid userId)
     {
         var user = await RepositoryDbContext.Users
@@ -33,6 +32,16 @@ public class ShopItemRepository : EFBaseRepository<ShopItem, ApplicationDbContex
         var cartItem = user.ShoppingCartItems?.FirstOrDefault(i => i.ItemId == itemId);
 
         return cartItem?.Item;
+    }
+    
+    public async Task<List<ShopItem>> GetCatalogItemsWithQuantityTaken(Guid userId)
+    {
+        // Fetch the catalog items along with their related ShoppingCartItems for the user
+        var catalog = await RepositoryDbContext.Items
+            .Include(i => i.ShoppingCartItems!.Where(sci => sci.AppUserId == userId)) 
+            .ToListAsync();
+
+        return catalog;
     }
 
     // Increments its quantity, or adds an item to the user's cart if it already exists
@@ -81,10 +90,7 @@ public class ShopItemRepository : EFBaseRepository<ShopItem, ApplicationDbContex
         {
             cartItem.Quantity--;
 
-            if (cartItem.Quantity <= 0)
-            {
-                user.ShoppingCartItems!.Remove(cartItem);
-            }
+            if (cartItem.Quantity <= 0) RepositoryDbContext.ShoppingCartItems.Remove(cartItem);
 
             await RepositoryDbContext.SaveChangesAsync();
         }
@@ -109,7 +115,7 @@ public class ShopItemRepository : EFBaseRepository<ShopItem, ApplicationDbContex
         {
             if (quantity == 0)
             {
-                user.ShoppingCartItems!.Remove(cartItem);
+                RepositoryDbContext.ShoppingCartItems.Remove(cartItem);
             }
             else
             {
@@ -139,8 +145,12 @@ public class ShopItemRepository : EFBaseRepository<ShopItem, ApplicationDbContex
 
         if (user == null)
             throw new KeyNotFoundException("User not found.");
+        if (user.ShoppingCartItems?.Any() == null || !user.ShoppingCartItems.Any()) return; 
 
-        user.ShoppingCartItems?.Clear();
+        foreach (var item in user.ShoppingCartItems)
+        {
+            RepositoryDbContext.ShoppingCartItems.Remove(item);
+        }
 
         await RepositoryDbContext.SaveChangesAsync();
     }

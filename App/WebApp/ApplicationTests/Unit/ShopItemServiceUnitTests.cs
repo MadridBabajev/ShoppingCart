@@ -3,136 +3,145 @@ using App.BLL.Services;
 using App.DAL.Contracts;
 using App.DAL.Seeding;
 using App.Domain.Entities;
+using App.Domain.Identity;
+using AutoMapper;
 using Moq;
-using Public.DTO.v1.ShoppingCartItems.RequestDTOs;
-using Public.DTO.v1.ShoppingCartItems.ResponseDTOs;
+using Public.DTO.v1.ShoppingCartItems;
 
 namespace TestProject1.Unit;
 
-public class ShopItemServiceUnitTests
+public class LessonsServiceUnitTests
 {
     private readonly Mock<IAppUOW> _uowMock;
     private readonly Mock<ShopItemDetailsMapper> _detailsMapperMock;
     private readonly Mock<ShopItemListElemMapper> _listMapperMock;
     private readonly ShopItemService _shopItemService;
-    private readonly DataGuids _dataGuids;
+    private readonly Mock<IMapper> _mapperMock;
 
-    public ShopItemServiceUnitTests()
+    public LessonsServiceUnitTests()
     {
+        // Initialize the mocks
         _uowMock = new Mock<IAppUOW>();
-        _detailsMapperMock = new Mock<ShopItemDetailsMapper>();
-        _listMapperMock = new Mock<ShopItemListElemMapper>();
+        _mapperMock = new Mock<IMapper>();
+        _detailsMapperMock = new Mock<ShopItemDetailsMapper>(_mapperMock.Object);
+        _listMapperMock = new Mock<ShopItemListElemMapper>(_mapperMock.Object);
         _shopItemService = new ShopItemService(_uowMock.Object, _detailsMapperMock.Object, _listMapperMock.Object);
-        _dataGuids = new DataGuids();
+        new DataGuids();
     }
 
     [Fact]
-    public async Task GetCartItem_ReturnsShopItemDetails_WhenItemExistsInCart()
-    {
-        // Arrange
-        var itemId = _dataGuids.Item1Id;
-        var userId = Guid.NewGuid();
-
-        var shopItemDetails = new ShopItemDetails
-        {
-            Id = itemId,
-            Name = "Sneakers",
-            Rating = 4.5,
-            StockAmount = 10,
-            Price = 50,
-            QuantityTaken = 2
-        };
-        
-        _uowMock.Setup(u => u.ShopItemRepository.GetCartItem(userId, itemId))
-                .ReturnsAsync(new ShopItem());
-
-        _detailsMapperMock.Setup(m => m.Map(It.IsAny<ShopItem>()))
-                          .Returns(shopItemDetails);
-
-        // Act
-        var result = await _shopItemService.GetCartItem(userId, itemId);
-
-        // Assert
-        Assert.NotNull(result);
-        Assert.Equal(shopItemDetails, result);
-    }
-
-    [Fact]
-    public async Task GetCartItems_ReturnsShopItemListElements_WhenCartItemsExist()
+    public async Task AddRemoveCartItem_ShouldIncrementItemQuantity_WhenActionIsIncrement()
     {
         // Arrange
         var userId = Guid.NewGuid();
-        
-        var cartItems = new List<ShoppingCartItem>
+        var itemId = Guid.NewGuid();
+
+        var user = new AppUser
         {
-            new ShoppingCartItem
+            Id = userId,
+            ShoppingCartItems = new List<ShoppingCartItem>
             {
-                ItemId = _dataGuids.Item1Id,
-                Item = new ShopItem
+                new ShoppingCartItem
                 {
-                    Id = _dataGuids.Item1Id,
-                    Name = "Sneakers",
-                    Rating = 4.5,
-                    StockAmount = 10,
-                    Price = 50,
-                },
-                Quantity = 2
+                    ItemId = itemId,
+                    AppUserId = userId,
+                    Quantity = 1 // Starting with a quantity of 1
+                }
             }
         };
-        
-        var shopItemListElement = new ShopItemListElement
-        {
-            Id = _dataGuids.Item1Id,
-            Name = "Sneakers",
-            Rating = 4.5,
-            StockAmount = 10,
-            Price = 50,
-            QuantityTaken = 2
-        };
-        
-        _uowMock.Setup(u => u.ShopItemRepository.GetCartItems(userId))
-                .ReturnsAsync(cartItems);
 
-        _listMapperMock.Setup(m => m.MapToShopItemListElem(It.IsAny<ShopItem>(), userId))
-                       .Returns(shopItemListElement);
-
-        // Act
-        var result = await _shopItemService.GetCartItems(userId);
-
-        // Assert
-        Assert.NotNull(result);
-        Assert.Single(result);
-        Assert.Equal(shopItemListElement, result.First());
-    }
-
-    [Fact]
-    public async Task AddRemoveCartItem_CallsRepositoryMethodsCorrectly()
-    {
-        // Arrange
-        var userId = Guid.NewGuid();
-        var itemId = _dataGuids.Item1Id;
+        // Mock the repository to return the user with the shopping cart item
+        _uowMock.Setup(u => u.ShopItemRepository.AddCartItem(It.IsAny<Guid>(), It.IsAny<Guid>())).Returns(Task.CompletedTask);
+        _uowMock.Setup(u => u.ShopItemRepository.RemoveCartItem(It.IsAny<Guid>(), It.IsAny<Guid>())).Returns(Task.CompletedTask);
+        _uowMock.Setup(u => u.ShopItemRepository.SetCartItemQuantity(It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<int?>())).Returns(Task.CompletedTask);
 
         // Act
         await _shopItemService.AddRemoveCartItem(userId, itemId, ECartItemActions.Increment, null);
-        await _shopItemService.AddRemoveCartItem(userId, itemId, ECartItemActions.Decrement, null);
-        await _shopItemService.AddRemoveCartItem(userId, itemId, ECartItemActions.SetAmount, 5);
 
         // Assert
-        _uowMock.Verify(u => u.ShopItemRepository.AddCartItem(userId, itemId), Times.Once);
-        _uowMock.Verify(u => u.ShopItemRepository.RemoveCartItem(userId, itemId), Times.Once);
-        _uowMock.Verify(u => u.ShopItemRepository.SetCartItemQuantity(userId, itemId, 5), Times.Once);
+        _uowMock.Verify(u => u.ShopItemRepository.AddCartItem(It.Is<Guid>(id => id == userId), It.Is<Guid>(id => id == itemId)), Times.Once);
     }
 
     [Fact]
-    public async Task RemoveAllCartItems_CallsRepositoryMethodCorrectly()
+    public async Task AddRemoveCartItem_ShouldDecrementItemQuantity_WhenActionIsDecrement()
     {
         // Arrange
         var userId = Guid.NewGuid();
+        var itemId = Guid.NewGuid();
+
+        var user = new AppUser
+        {
+            Id = userId,
+            ShoppingCartItems = new List<ShoppingCartItem>
+            {
+                new()
+                {
+                    ItemId = itemId,
+                    AppUserId = userId,
+                    Quantity = 2 // Starting with a quantity greater than 1
+                }
+            }
+        };
+
+        // Mock the repository to return the user with the shopping cart item
+        _uowMock.Setup(u => u.ShopItemRepository.AddCartItem(It.IsAny<Guid>(), It.IsAny<Guid>())).Returns(Task.CompletedTask);
+        _uowMock.Setup(u => u.ShopItemRepository.RemoveCartItem(It.IsAny<Guid>(), It.IsAny<Guid>())).Returns(Task.CompletedTask);
+        _uowMock.Setup(u => u.ShopItemRepository.SetCartItemQuantity(It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<int?>())).Returns(Task.CompletedTask);
+
+        // Act
+        await _shopItemService.AddRemoveCartItem(userId, itemId, ECartItemActions.Decrement, null);
+
+        // Assert
+        _uowMock.Verify(u => u.ShopItemRepository.RemoveCartItem(It.Is<Guid>(id => id == userId), It.Is<Guid>(id => id == itemId)), Times.Once);
+    }
+
+    [Fact]
+    public async Task AddRemoveCartItem_ShouldSetItemQuantity_WhenActionIsSetAmount()
+    {
+        // Arrange
+        var userId = Guid.NewGuid();
+        var itemId = Guid.NewGuid();
+        var quantity = 10;
+
+        var user = new AppUser
+        {
+            Id = userId,
+            ShoppingCartItems = new List<ShoppingCartItem>
+            {
+                new ShoppingCartItem
+                {
+                    ItemId = itemId,
+                    AppUserId = userId,
+                    Quantity = 1 // Initial quantity
+                }
+            }
+        };
+
+        // Mock repository behavior
+        _uowMock.Setup(u => u.ShopItemRepository.SetCartItemQuantity(It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<int?>())).Returns(Task.CompletedTask);
+        _uowMock.Setup(u => u.ShopItemRepository.GetCartItems(userId))
+            .ReturnsAsync(user.ShoppingCartItems);
+
+        // Act
+        await _shopItemService.AddRemoveCartItem(userId, itemId, ECartItemActions.SetAmount, quantity);
+
+        // Assert
+        _uowMock.Verify(u => u.ShopItemRepository.SetCartItemQuantity(It.Is<Guid>(id => id == userId), It.Is<Guid>(id => id == itemId), It.Is<int?>(q => q == quantity)), Times.Once);
+    }
+
+    [Fact]
+    public async Task RemoveAllCartItems_ShouldRemoveAllItemsFromCart()
+    {
+        // Arrange
+        var userId = Guid.NewGuid();
+
+        // Mock the repository behavior
+        _uowMock.Setup(u => u.ShopItemRepository.RemoveAllCartItems(It.IsAny<Guid>())).Returns(Task.CompletedTask);
 
         // Act
         await _shopItemService.RemoveAllCartItems(userId);
 
         // Assert
-        _uowMock.Verify(u => u.ShopItemRepository.RemoveAllCartItems(userId), Times.Once);
+        _uowMock.Verify(u => u.ShopItemRepository.RemoveAllCartItems(It.Is<Guid>(id => id == userId)), Times.Once);
     }
 }

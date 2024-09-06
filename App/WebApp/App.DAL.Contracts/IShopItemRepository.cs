@@ -12,4 +12,5 @@ public interface IShopItemRepository : IBaseRepository<ShopItem>
     Task RemoveAllCartItems(Guid userId);
     Task<IEnumerable<ShoppingCartItem>> GetCartItems(Guid userId);
     Task<ShopItem?> GetCartItem(Guid userId, Guid itemId);
+    Task<List<ShopItem>> GetCatalogItemsWithQuantityTaken(Guid userId);
 }

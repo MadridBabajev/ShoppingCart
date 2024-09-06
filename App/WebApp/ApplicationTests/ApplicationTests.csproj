@@ -27,6 +27,7 @@
       <ProjectReference Include="..\App.DAL.Contracts\App.DAL.Contracts.csproj" />
       <ProjectReference Include="..\App.DAL\App.DAL.csproj" />
       <ProjectReference Include="..\Base.Mapper.Contracts\Base.Mapper.Contracts.csproj" />
+      <ProjectReference Include="..\WebApp\WebApp.csproj" />
     </ItemGroup>
 
 </Project>
