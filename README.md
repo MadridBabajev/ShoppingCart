@@ -1,4 +1,4 @@
-# ShoppingCart
+# ShoppingCart - Backend
 
 ## 1. Install .NET SDK
 - This project runs on .NET 8.0.401

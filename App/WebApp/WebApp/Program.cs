@@ -166,6 +166,9 @@ app.UseSwaggerUI(options =>
     }
 });
 
+// Application is set to listen on all interfaces
+builder.WebHost.UseUrls("http://*:80");
+
 // Map routes for controllers
 app.MapControllerRoute(
     name: "default",
@@ -205,7 +208,7 @@ static void SetupAppData(IApplicationBuilder app, IConfiguration configuration, 
     }
 
     // Drop and recreate database if configured
-    if (configuration.GetValue<bool>("DataInit:DropDatabase"))
+    if (env.IsDevelopment() && configuration.GetValue<bool>("DataInit:DropDatabase"))
     {
         logger.LogWarning("Dropping database");
         AppDataInit.DropDatabase(context);
