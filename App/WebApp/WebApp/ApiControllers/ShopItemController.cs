@@ -7,8 +7,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Public.DTO.v1.ApiResponses;
-using Public.DTO.v1.ShoppingCartItems.RequestDTOs;
-using Public.DTO.v1.ShoppingCartItems.ResponseDTOs;
+using Public.DTO.v1.ShoppingCartItems;
 
 namespace WebApp.ApiControllers;
 

@@ -1,6 +1,5 @@
 using Base.BLL.Contracts;
-using Public.DTO.v1.ShoppingCartItems.RequestDTOs;
-using Public.DTO.v1.ShoppingCartItems.ResponseDTOs;
+using Public.DTO.v1.ShoppingCartItems;
 
 namespace App.BLL.Contracts;
 

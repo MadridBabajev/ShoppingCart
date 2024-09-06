@@ -4,8 +4,7 @@ using App.BLL.Mappers;
 using App.DAL.Contracts;
 using App.Domain.Entities;
 using Base.BLL;
-using Public.DTO.v1.ShoppingCartItems.RequestDTOs;
-using Public.DTO.v1.ShoppingCartItems.ResponseDTOs;
+using Public.DTO.v1.ShoppingCartItems;
 
 namespace App.BLL.Services;
 

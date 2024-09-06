@@ -1,4 +1,4 @@
-namespace Public.DTO.v1.ShoppingCartItems.RequestDTOs;
+namespace Public.DTO.v1.ShoppingCartItems;
 
 public class ShoppingCartItemAction
 {
